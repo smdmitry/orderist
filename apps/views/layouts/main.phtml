@@ -12,8 +12,8 @@ $user = rand() % 2;
     <link rel="stylesheet" href="/static/bootstrap.min.css" media="screen">
     <link rel="stylesheet" href="/static/base.css" media="screen">
     <script src="/static/jquery-1.12.2.min.js"></script>
-
     <script src="http://bootswatch.com/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="/static/base.js"></script>
 </head>
 <body>
 <div class="navbar navbar-default navbar-fixed-top">
@@ -31,7 +31,7 @@ $user = rand() % 2;
                 </li>
                 <li>
                     <form class="navbar-form">
-                        <a href="/" class="btn btn-success">+ Разместить заказ</a>
+                        <a href="/" onclick="orderist.order.createPopup(); return false;" class="btn btn-success btn-sm">+ Разместить заказ</a>
                     </form>
                 </li>
             </ul>
@@ -66,6 +66,8 @@ $user = rand() % 2;
 <div class="container">
     <?=$this->getContent()?>
 </div>
+
+<div id="modal-popup" class="modal fade" role="dialog"></div>
 
 </body>
 </html>
