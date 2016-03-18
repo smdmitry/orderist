@@ -2,6 +2,7 @@
 
 error_reporting(E_ALL | E_STRICT);
 ini_set('display_errors', 1);
+mb_internal_encoding('UTF-8');
 
 use Phalcon\DI;
 use Phalcon\Loader;
@@ -22,6 +23,7 @@ class Application extends BaseApplication
 		$loader->registerDirs(array(
 			'../apps/base/',
 			'../apps/controllers/',
+			'../apps/dao/',
 			'../apps/models/'
 		));
 
@@ -61,16 +63,31 @@ class Application extends BaseApplication
 		$di->set('view', function() {
 			$view = new View();
 			$view->setViewsDir('../apps/views/');
+			//$view->setPartialsDir('../apps/views/');
 			$view->setLayout('main');
 			return $view;
 		});
+		$di->set('tag', function () {
+			return new BaseTag();
+		});
+
+		/*$di->set('cookies', function() {
+			$cookies = new Phalcon\Http\Response\Cookies();
+			$cookies->useEncryption(false);
+			return $cookies;
+		});*/
 
 		$di->set('db', function() {
-			return new Database(array(
+			return new \Phalcon\Db\Adapter\Pdo\Mysql(array(
 				"host" => "localhost",
 				"username" => "orderist",
 				"password" => "zeMjPeBKeEu5nSpmmVqh",
-				"dbname" => "orderist"
+				"dbname" => "orderist",
+				'charset' => 'utf8',
+				'options' => array(
+					PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES \'UTF8\'',
+					PDO::ATTR_CASE => PDO::CASE_LOWER,
+				),
 			));
 		});
 
@@ -89,6 +106,10 @@ class Application extends BaseApplication
 try {
 	$application = new Application();
 	$application->main();
+
+	if (BackgroundWorker::i()->hasJob()) {
+		BackgroundWorker::i()->doJob();
+	}
 } catch (\Exception $e) {
 	echo $e->getMessage();
 }

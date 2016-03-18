@@ -1,6 +1,10 @@
+<script>
+    orderist.order.loadMoreUrl = '/user/getorderspage/?state=<?=$state?>';
+</script>
 <ul class="nav nav-tabs">
-    <li role="presentation" class="active"><a href="#">Все закакзы</a></li>
-    <li role="presentation"><a href="#">Активные</a></li>
-    <li role="presentation"><a href="#">Выполненные</a></li>
+    <li role="presentation" class="<?=$state === OrderDao::STATE_NEW ? 'active' : ''?>"><a href="/user/orders/?state=<?=OrderDao::STATE_NEW?>">Активные</a></li>
+    <li role="presentation" class="<?=$state === OrderDao::STATE_EXECUTED ? 'active' : ''?>"><a href="/user/orders/?state=<?=OrderDao::STATE_EXECUTED?>">Выполненные</a></li>
+    <li role="presentation" class="<?=!$state ? 'active' : ''?>"><a href="/user/orders/?state=0">Все закакзы</a></li>
 </ul>
 <? include '/var/www/apps/views/index/orders.phtml' ?>
+

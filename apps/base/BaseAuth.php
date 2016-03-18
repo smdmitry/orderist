@@ -1,0 +1,54 @@
+<?php
+
+class BaseAuth extends \Phalcon\DI\Injectable
+{
+    private $_salt = 'Ibcj;cdfA~\cj3mU`k]>$]O4[qksMJl;*7';
+
+    public static function i() { static $instance; if (empty($instance)) $instance = new static(); return $instance; }
+
+    public function authUser($user)
+    {
+        $year = 31536000;
+
+        BaseService::i()->setCookie('uid', $user['id'], $year);
+        BaseService::i()->setCookie('hw', $this->getAuthHash($user['id'], $user['email'], $user['password']), $year);
+
+        return true;
+    }
+
+    public function getAuthUser()
+    {
+        $uid = BaseService::i()->getCookie('uid');
+        $hw = BaseService::i()->getCookie('hw');
+
+        if (!$uid) {
+            return false;
+        }
+
+        $user = UserDao::i()->getById($uid);
+        if (!$user) {
+            return false;
+        }
+
+        if ($hw == $this->getAuthHash($user['id'], $user['email'], $user['password'])) {
+            return $user;
+        }
+
+        return false;
+    }
+
+    public function logout()
+    {
+        BaseService::i()->deleteCookie('hw');
+    }
+
+    public function getAuthHash($id, $email, $password)
+    {
+        return md5($this->_salt . '_' . $id . $email . $password);
+    }
+
+    public function getEmailApproveHash($user)
+    {
+        return md5($this->_salt . '_approve_' . $user['id'] . '_' . $user['email']);
+    }
+}

@@ -1,63 +1,17 @@
-<? for ($i = 0; $i <= 10; $i++): ?>
-    <?
-    $id = rand();
-    $disabled = rand() % 3 == 2;
-    $desc = rand() % 2 ? 'Тут большое описание того что надо сделать и кнопка показать больше.
-            Тут большое описание того что надо сделать и кнопка показать больше.
-            Тут большое описание того что надо сделать и кнопка показать больше.
-            Тут большое описание того что надо сделать и кнопка показать больше.
-            Тут большое описание того что надо сделать и кнопка показать больше.
-            Тут большое описание того что надо сделать и кнопка показать больше.' : 'А тут очень короткое';
-    $expandable = mb_strlen($desc) > 200;
-    ?>
-    <div id="order-<?=$id?>" class="row col-md-10 col-md-offset-1 order-block<?=$disabled ? ' disabled' : ''?><?=$expandable ? ' expandable' : ''?>"
-        onclick="expandOrder('<?=$id?>')"
-        >
-        <div class="order-price" style="text-align: right;">
-            <div style="margin-bottom: 10px; font-size: 12px; color: gray;">Вы получите:</div>
-            <span class="label label-warning"><?=number_format(rand() % 2 ? rand(1, 200000) : rand(1, 2000), 0, ',', ' ');?> р.</span>
-        </div>
-
-        <div class="order-title">
-            <? $desc = rand() % 2 ? 'Вынести мусор после установки окон и одной двери туда-сюда' : 'А тут очень короткое' ?>
-            <?=$desc?>
-        </div>
-
-        <div class="order-desc">
-            <? $desc = rand() % 2 ? 'Тут большое описание того что надо сделать и кнопка показать больше.
-            Тут большое описание того что надо сделать и кнопка показать больше.
-            Тут большое описание того что надо сделать и кнопка показать больше.
-            Тут большое описание того что надо сделать и кнопка показать больше.
-            Тут большое описание того что надо сделать и кнопка показать больше.
-            Тут большое описание того что надо сделать и кнопка показать больше.' : 'А тут очень короткое' ?>
-
-            <? if (mb_strlen($desc) > 200): ?>
-                <?=mb_substr($desc, 0, 200) . '<span class="more">...</span>'?>
-                <span class="collapsed" style="display: none;"><?=mb_substr($desc, 200)?></span>
-                <a href="/order/<?=$id?>/" class="hyp" onclick="expandOrder('<?=$id?>'); return false;">Показать полностью</a>
-            <? else: ?>
-                <?=$desc?>
-            <? endif ?>
-        </div>
-
-        <div class="order-footer">
-            <button type="button" onclick="event.stopPropagation(); return false;" class="btn btn-info order-button">
-                Выполнить заказ
-            </button>
-
-            <? /*<div class="order-user">
-                Автор: <a href="/">Игорь</a>
-            </div>*/ ?>
-        </div>
-    </div>
-<? endfor ?>
+<div id="orders-block">
+    <? include 'orders_block.phtml' ?>
+</div>
 
 <script>
-    var expandOrder = function(id) {
-        var block = $('#order-'+id);
-        block.removeClass('expandable');
-        $('.more', block).remove();
-        $('.hyp', block).remove();
-        $('.collapsed', block).show();
-    };
+    $(window).scroll(function() {
+        if ($(window).scrollTop() + $(window).height() >= $(document).height() - 300) {
+            orderist.order.loadMore();
+        }
+    });
+
+    $(document).ready(function() {
+        if ($(window).scrollTop() + $(window).height() >= $(document).height() - 300) {
+            orderist.order.loadMore();
+        }
+    });
 </script>

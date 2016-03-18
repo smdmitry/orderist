@@ -1,1 +1,2 @@
-баланс
+Ваш баланс: <span class="label label-info"><span class="executer-price "><?=UserDao::i()->getField($USER, 'cash')?></span> руб.</span>
+, ещё <span class="label label-default order-comission"><?=UserDao::i()->getField($USER, 'hold')?> руб.</span> заблокировано.

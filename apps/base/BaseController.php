@@ -4,6 +4,23 @@ use Phalcon\Mvc\Controller;
 
 class BaseController extends Controller
 {
+    const TAB_ORDERS = 1;
+    const TAB_MY_ORDERS = 2;
+    const TAB_CASH = 3;
+    const TAB_USER = 4;
+
+    protected $USER = null;
+
+    protected function initialize()
+    {
+        $user = BaseAuth::i()->getAuthUser();
+
+        $this->USER = $user;
+        $this->view->USER = $user;
+
+        $this->view->e = new Phalcon\Escaper();
+    }
+
     protected function ajaxSuccess($data = null)
     {
         $this->view->setRenderLevel(\Phalcon\Mvc\View::LEVEL_NO_RENDER);
@@ -49,7 +66,7 @@ class BaseController extends Controller
     protected function renderView($partialPath)
     {
         ob_start();
-        $this->view->partial($partialPath);
+        echo $this->view->getPartial($partialPath);
         $html = ob_get_contents();
         ob_clean();
 
@@ -73,6 +90,13 @@ class BaseController extends Controller
 
     public function beforeExecuteRoute($dispatcher)
     {
+        $this->view->USER = $this->USER;
+        $this->view->navTab = 0;
+        $this->view->staticDomain = 'orderist.smd.im';
+    }
 
+    public function isAjax()
+    {
+        return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
     }
 }
