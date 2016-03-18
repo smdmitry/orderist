@@ -1,0 +1,74 @@
+body {
+    padding-top: 75px;
+}
+
+.navbar-default {
+    background-color: rgba(0,0,0,.7);
+}
+
+.container-fluid, .container {
+    max-width: 930px;
+}
+
+.order-block {
+    padding: 20px 40px 20px 40px;
+    border-bottom: 1px solid #dce4ec;
+}
+.order-block:hover {
+    background-color: rgba(220, 228, 236, 0.2);
+}
+.order-block.expandable {
+    cursor: pointer;
+}
+
+.order-block .order-title {
+    color: #000;
+    font-size: 18px;
+    font-weight: bold;
+    padding-right: 120px;
+}
+
+.order-block .order-desc {
+    margin: 10px 10px 10px 0;
+    padding-right: 100px;
+}
+.order-block .order-desc a {
+    font-size: 14px;
+    color: #2c3e50;
+    text-decoration: underline;
+}
+.order-block .order-desc a:hover {
+    text-decoration: none;
+}
+
+.order-block .order-user {
+    font-size: 16px;
+}
+
+.order-block .order-price {
+    margin-top: 5px;
+    float: right;
+}
+.order-block .order-price span {
+    font-size: 18px;
+}
+
+.order-block .order-footer {
+    margin-top: 20px;
+}
+.order-block .order-button {
+    float: right;
+}
+
+.order-block.disabled {
+    opacity: 0.6;
+}
+.order-block.disabled .order-button {
+    background-color: rgb(192, 192, 192);
+    border-color: rgba(0, 0, 0, 0);
+    cursor: default;
+}
+.order-block.disabled .order-price .label {
+    background-color: #95a5a6;
+}
+

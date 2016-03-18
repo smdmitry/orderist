@@ -1,0 +1,71 @@
+<?
+$user = rand() % 2;
+?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ru" lang="ru">
+<head>
+    <title>Заказист</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    <link rel="stylesheet" href="/static/bootstrap.min.css" media="screen">
+    <link rel="stylesheet" href="/static/base.css" media="screen">
+    <script src="/static/jquery-1.12.2.min.js"></script>
+
+    <script src="http://bootswatch.com/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+</head>
+<body>
+<div class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <a href="/" class="navbar-brand">Заказист</a>
+        </div>
+        <div class="navbar-collapse collapse" id="navbar-main">
+            <ul class="nav navbar-nav">
+                <li>
+                    <a href="/orders/">Все заказы</a>
+                </li>
+                <li>
+                    <a href="/user/orders/">Мои заказы</a>
+                </li>
+                <li>
+                    <form class="navbar-form">
+                        <a href="/" class="btn btn-success">+ Разместить заказ</a>
+                    </form>
+                </li>
+            </ul>
+
+            <ul class="nav navbar-nav navbar-right">
+                <? if ($user): ?>
+                    <li>
+                        <a href="/user/cash/">Баланс: <span style="font-weight: bold;"><span id="cash">0.00</span> р</span></a>
+                    </li>
+                    <li class="dropdown">
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="#">Дмитрий <span class="caret"></span></a>
+                        <ul class="dropdown-menu" aria-labelledby="download">
+                            <li><a href="/user/cash/">Баланс</a></li>
+                            <li><a href="/user/">Профиль</a></li>
+                            <li class="divider"></li>
+                            <li><a href="/user/logout/">Выход</a></li>
+                        </ul>
+                    </li>
+                <? else: ?>
+                    <li>
+                        <a href="/user/login/">Вход</a>
+                    </li>
+                    <li>
+                        <a href="/user/signup/">Регистрация</a>
+                    </li>
+                <? endif ?>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <?=$this->getContent()?>
+</div>
+
+</body>
+</html>
