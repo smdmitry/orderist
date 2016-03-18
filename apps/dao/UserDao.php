@@ -2,6 +2,9 @@
 
 class UserDao extends BaseDao
 {
+    const TABLE_USER = 'order_users';
+    const TABLE_PAYMENTS = 'order_payments';
+
     public function getById($id)
     {
         $ids = $this->getByIds([$id]);
@@ -14,7 +17,7 @@ class UserDao extends BaseDao
             return [];
         }
 
-        $select = "SELECT * FROM order_users WHERE id IN (". $this->implodeBind($ids) .");";
+        $select = "SELECT * FROM ". self::TABLE_USER ." WHERE id IN (". $this->implodeBind($ids) .");";
         return $this->db->fetchAll($select, Phalcon\Db::FETCH_ASSOC);
     }
 
@@ -31,13 +34,23 @@ class UserDao extends BaseDao
 
     public function getByEmail($email)
     {
-        $select = "SELECT * FROM order_users WHERE email = ?;";
+        $select = "SELECT * FROM ". self::TABLE_USER ." WHERE email = ?;";
         return $this->db->fetchOne($select, Phalcon\Db::FETCH_ASSOC, [$email]);
+    }
+
+    public function getField($USER, $field)
+    {
+        if ($field == 'cash') {
+            return number_format(($USER['cash'] - $USER['hold']) / 100, 2, '.', ' ');
+        } else if ($field == 'hold') {
+            return number_format($USER['hold'] / 100, 2, '.', ' ');
+        }
+        return $USER[$field];
     }
 
     private function _addUser($name, $email, $phash)
     {
-        $res = $this->db->insertAsDict('order_users', [
+        $res = $this->db->insertAsDict(self::TABLE_USER, [
             'name' => $name,
             'email' => $email,
             'password' => $phash,
@@ -79,13 +92,40 @@ class UserDao extends BaseDao
         return $this->_addUser($name, $email, $password);
     }
 
-    public function getField($USER, $field)
+    protected function _update($userId, $bind)
     {
-        if ($field == 'cash') {
-            return number_format(($USER['cash'] - $USER['hold']) / 100, 2, '.', ' ');
-        } else if ($field == 'hold') {
-            return number_format($USER['hold'] / 100, 2, '.', ' ');
+        $res = $this->db->updateAsDict(self::TABLE_USER, $bind, "id = {$userId}");
+        return $res;
+    }
+
+    public function addMoney($userId, $amount, $hold = 0, $orderId = 0)
+    {
+        $res = $this->db->insertAsDict(self::TABLE_PAYMENTS, [
+            'user_id' => $userId,
+            'amount' => $amount,
+            'order_id' => $orderId,
+            'inserted' => time(),
+        ]);
+        $paymentId = $res ? $this->db->lastInsertId() : 0;
+
+        if (!$paymentId) {
+            return false;
         }
-        return $USER[$field];
+
+        $table = self::TABLE_USER;
+        $query = "UPDATE {$table} SET cash = cash + {$amount}, hold = hold + {$hold} WHERE id = $userId;";
+        $res = $this->db->query($query);
+
+        return $res ? $paymentId : false;
+    }
+
+    public function lock($userId)
+    {
+        return BaseMemcache::i()->add('userCashLock:' . $userId, 1, 10);
+    }
+
+    public function unlock($userId)
+    {
+        return BaseMemcache::i()->delete('userCashLock:' . $userId);
     }
 }

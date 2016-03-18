@@ -16,7 +16,8 @@ var orderist = {
             return $.post(url, params, callback);
         },
         notify: function (text) {
-            alert(text);
+            $('#modal-alert .modal-body').html(text);
+            orderist.popup.open($('#modal-alert').html());
         },
         formData: function(form) {
             var formArr = form.serializeArray();
@@ -65,7 +66,7 @@ var orderist = {
                 }
             }
 
-            return false;
+            return response.res;
         }
     },
     popup: {
@@ -124,6 +125,21 @@ var orderist = {
         },
         create: function() {
             orderist.core.post('/order/create/', orderist.core.formData($('form', popup)), function (response) {
+
+            });
+        },
+        execute: function (orderId) {
+            orderist.core.post('/order/execute/', {order_id: orderId}, function (response) {
+                if (response.data && response.data.order == 'disabled') {
+                    $('#order-'+orderId).addClass('disabled');
+                    $('#order-'+orderId+' button').html('Заказ выполнен');
+                }
+
+                    if (orderist.core.processResponse(response)) {
+                        $('#order-'+orderId).addClass('disabled');
+                        $('#order-'+orderId+' .order-get-text').html('Вы получили:');
+                        $('#order-'+orderId+' button').html('Заказ выполнен');
+                    }
 
             });
         },

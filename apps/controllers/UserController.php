@@ -11,10 +11,12 @@ class UserController extends BaseController
 
 	public function ordersAction()
 	{
-		$userId = 1;
+		if (!$this->USER) {
+            return $this->redirect('/');
+        }
 
 		$state = (int)$this->p('state', OrderDao::STATE_NEW);
-		$orders = OrderDao::i()->getUserOrders($userId, $state, self::ORDERS_PER_PAGE);
+		$orders = OrderDao::i()->getUserOrders($this->USER['id'], $state, self::ORDERS_PER_PAGE);
 
 		$this->view->state = $state;
 		$this->view->orders = $orders;
@@ -23,12 +25,14 @@ class UserController extends BaseController
 	}
 	public function getorderspageAction()
 	{
-		$userId = 1;
+        if ($this->USER) {
+            return $this->ajaxSuccess(['redirect' => '/orders/']);
+        }
 
 		$lastOrderId = (int)$this->p('last_order_id', 0);
 		$state = (int)$this->p('state', 0);
 
-		$orders = OrderDao::i()->getUserOrders($userId, $state, self::ORDERS_PER_PAGE, $lastOrderId);
+		$orders = OrderDao::i()->getUserOrders($this->USER['id'], $state, self::ORDERS_PER_PAGE, $lastOrderId);
 		$this->view->orders = $orders;
 
 		$hasNext = count($orders) >= self::ORDERS_PER_PAGE;

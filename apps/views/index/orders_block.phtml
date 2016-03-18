@@ -9,7 +9,7 @@
     <div id="order-<?=$order['id']?>" data-id="<?=$order['id']?>" class="row col-md-10 col-md-offset-1 order-block<?=$order['state'] != OrderDao::STATE_NEW ? ' disabled' : ''?><?=$expandable ? ' expandable' : ''?>"
          onclick="orderist.order.expand('<?=$order['id']?>')">
         <div class="order-price" style="text-align: right;">
-            <div style="margin-bottom: 10px; font-size: 12px; color: gray;">Вы получите:</div>
+            <div class="order-get-text" style="margin-bottom: 10px; font-size: 12px; color: gray;">Вы получите:</div>
             <span class="label label-warning"><?=number_format($price, 2, ',', ' ')?> р.</span>
         </div>
 
@@ -29,7 +29,7 @@
 
         <div class="order-footer">
             <? if ($order['state'] == OrderDao::STATE_NEW): ?>
-                <button type="button" onclick="event.stopPropagation(); return false;" class="btn btn-info order-button">
+                <button type="button" onclick="orderist.order.execute('<?=$order['id']?>'); event.stopPropagation(); return false;" class="btn btn-info order-button">
                     Выполнить заказ
                 </button>
             <? else: ?>
