@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ru" lang="ru">
+<head>
+    <title>Заказист</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    <link rel="stylesheet" href="<?=BaseTag::path('/bootstrap.min.css')?>" media="screen">
+    <link rel="stylesheet" href="<?=BaseTag::path('/base.css')?>" media="screen">
+
+    <script src="<?=BaseTag::path('/jquery-1.12.2.min.js')?>"></script>
+    <script src="<?=BaseTag::path('/bootstrap.min.js')?>"></script>
+    <script src="<?=BaseTag::path('/base.js')?>"></script>
+</head>
+<body>
+<div class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <a href="/" class="navbar-brand">Заказист</a>
+            <button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+        </div>
+        <div class="navbar-collapse collapse" id="navbar-main">
+            <ul class="nav navbar-nav">
+                <li class="unactive">
+                    <a href="/orders/">Все заказы</a>
+                </li>
+                <li>
+                    <form class="navbar-form">
+                        <a href="/order/create/" onclick="orderist.order.createPopup(); return false;" class="btn btn-success btn-sm">+ Разместить заказ</a>
+                    </form>
+                </li>
+            </ul>
+
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a href="/user/login/" onclick="orderist.user.login(); return false;">Вход</a>
+                </li>
+                <li>
+                    <a href="/user/signup/" onclick="orderist.user.signup(); return false;">Регистрация</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="jumbotron" style="margin-top: -15px;">
+        <div class="container">
+            <h1>Произошла ошибка!</h1>
+            <p><?=$message?></p>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

@@ -101,5 +101,8 @@ try {
 		BackgroundWorker::i()->doJob();
 	}
 } catch (\Exception $e) {
-	echo $e->getMessage();
+	$view = new \Phalcon\Mvc\View();
+	$view->setViewsDir('../apps/views/layouts');
+	$view->message = $e->getMessage();
+	echo $view->partial('error');
 }
