@@ -18,15 +18,22 @@
     <div class="container">
         <div class="navbar-header">
             <a href="/" class="navbar-brand">Заказист</a>
+            <button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
         </div>
         <div class="navbar-collapse collapse" id="navbar-main">
             <ul class="nav navbar-nav">
                 <li class="<?=$navTab == BaseController::TAB_ORDERS ? 'active' : 'unactive'?>">
                     <a href="/orders/">Все заказы</a>
                 </li>
-                <li class="<?=$navTab == BaseController::TAB_MY_ORDERS ? 'active' : 'unactive'?>">
-                    <a href="/user/orders/">Мои заказы</a>
-                </li>
+                <? if ($USER): ?>
+                    <li class="<?=$navTab == BaseController::TAB_MY_ORDERS ? 'active' : 'unactive'?>">
+                        <a href="/user/orders/">Мои заказы</a>
+                    </li>
+                <? endif ?>
                 <li>
                     <form class="navbar-form">
                         <a href="/order/create/" onclick="orderist.order.createPopup(); return false;" class="btn btn-success btn-sm">+ Разместить заказ</a>
@@ -37,7 +44,7 @@
             <ul class="nav navbar-nav navbar-right">
                 <? if ($USER): ?>
                     <li class="<?=$navTab == BaseController::TAB_CASH ? 'active' : 'unactive'?>">
-                        <a href="/user/cash/">Баланс: <span style="font-weight: bold;"><span id="cash"><?=UserDao::i()->getField($USER, 'cash')?></span> руб.</span></a>
+                        <a href="/user/cash/">Баланс: <span style="font-weight: bold;"><span class="user-cash"><?=UserDao::i()->getField($USER, 'cash')?></span> руб.</span></a>
                     </li>
                     <li class="dropdown <?=$navTab == BaseController::TAB_USER ? 'active' : 'unactive'?>">
                         <a class="dropdown-toggle" data-toggle="dropdown" href="#"><?=$USER['name']?> <span class="caret"></span></a>

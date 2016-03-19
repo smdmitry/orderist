@@ -17,8 +17,8 @@ class UserDao extends BaseDao
             return [];
         }
 
-        $select = "SELECT * FROM ". self::TABLE_USER ." WHERE id IN (". $this->implodeBind($ids) .");";
-        return $this->db->fetchAll($select, Phalcon\Db::FETCH_ASSOC);
+        $select = $this->db->select()->from(self::TABLE_USER)->where('id IN (?)', [$ids]);
+        return $this->db->fetchAssoc($select);
     }
 
     public function getByEmailPassword($email, $password)
@@ -34,23 +34,23 @@ class UserDao extends BaseDao
 
     public function getByEmail($email)
     {
-        $select = "SELECT * FROM ". self::TABLE_USER ." WHERE email = ?;";
-        return $this->db->fetchOne($select, Phalcon\Db::FETCH_ASSOC, [$email]);
+        $select = $this->db->select()->from(self::TABLE_USER)->where('email = ?', $email);
+        return $this->db->fetchRow($select);
     }
 
     public function getField($USER, $field)
     {
         if ($field == 'cash') {
-            return number_format(($USER['cash'] - $USER['hold']) / 100, 2, '.', ' ');
+            return BaseService::i()->formatMoney($USER['cash'] - $USER['hold']);
         } else if ($field == 'hold') {
-            return number_format($USER['hold'] / 100, 2, '.', ' ');
+            return BaseService::i()->formatMoney($USER['hold']);
         }
         return $USER[$field];
     }
 
     private function _addUser($name, $email, $phash)
     {
-        $res = $this->db->insertAsDict(self::TABLE_USER, [
+        $res = $this->db->insert(self::TABLE_USER, [
             'name' => $name,
             'email' => $email,
             'password' => $phash,
@@ -94,13 +94,13 @@ class UserDao extends BaseDao
 
     protected function _update($userId, $bind)
     {
-        $res = $this->db->updateAsDict(self::TABLE_USER, $bind, "id = {$userId}");
+        $res = $this->db->update(self::TABLE_USER, $bind, $this->db->qq("id = ?", $userId));
         return $res;
     }
 
     public function addMoney($userId, $amount, $hold = 0, $orderId = 0)
     {
-        $res = $this->db->insertAsDict(self::TABLE_PAYMENTS, [
+        $res = $this->db->insert(self::TABLE_PAYMENTS, [
             'user_id' => $userId,
             'amount' => $amount,
             'order_id' => $orderId,
@@ -112,9 +112,10 @@ class UserDao extends BaseDao
             return false;
         }
 
-        $table = self::TABLE_USER;
-        $query = "UPDATE {$table} SET cash = cash + {$amount}, hold = hold + {$hold} WHERE id = $userId;";
-        $res = $this->db->query($query);
+        $res = $this->db->update(self::TABLE_USER, [
+            'cash' => new DriverExpr($this->db->qq('cash + ?', $amount)),
+            'hold' => new DriverExpr($this->db->qq('hold + ?', $hold)),
+        ], $this->db->qq('id = ?', $userId));
 
         return $res ? $paymentId : false;
     }
@@ -127,5 +128,21 @@ class UserDao extends BaseDao
     public function unlock($userId)
     {
         return BaseMemcache::i()->delete('userCashLock:' . $userId);
+    }
+
+    public function getUserPayments($userId, $limit, $lastPaymentId = 0)
+    {
+        $limit = (int)$limit;
+
+        $select = $this->db->select()->from(self::TABLE_PAYMENTS)->order('id DESC')->limit($limit);
+        if ($userId) {
+            $select->where('user_id = ?', $userId);
+        }
+
+        if ($lastPaymentId) {
+            $select->where('id < ?', $lastPaymentId);
+        }
+
+        return $this->db->fetchAssoc($select);
     }
 }

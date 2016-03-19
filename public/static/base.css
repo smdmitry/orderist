@@ -2,10 +2,6 @@ body {
     padding-top: 75px;
 }
 
-.navbar-default {
-    background-color: rgba(0,0,0,.7);
-}
-
 .container-fluid, .container {
     max-width: 930px;
 }
@@ -31,6 +27,7 @@ body {
 .order-block .order-desc {
     margin: 10px 10px 10px 0;
     padding-right: 100px;
+    min-height: 20px;
 }
 .order-block .order-desc a {
     font-size: 14px;
@@ -55,6 +52,13 @@ body {
 
 .order-block .order-footer {
     margin-top: 20px;
+    height: 45px;
+}
+.order-block .order-footer .order-date {
+    font-size: 12px;
+    color: gray;
+    float: left;
+    padding-top: 25px;
 }
 .order-block .order-button {
     float: right;
@@ -72,6 +76,24 @@ body {
     background-color: #95a5a6;
 }
 
+#user-payments-block .positive td {
+    color: rgba(24, 188, 156, 1);
+}
+#user-payments-block .negative td {
+    color: rgba(231, 76, 60, 1);
+}
+
+.navbar-default {
+    background-color: rgba(0,0,0,.7);
+}
+.navbar-collapse.collapse.in, .navbar-collapse.collapsing {
+    background-color: rgba(0,0,0,.7);
+}
+.navbar-nav > li > a { padding-top: 15px !important; padding-bottom: 14px !important; }
+.navbar { min-height: 51px !important; height: 51px; }
+.navbar-header { height: 50px; }
+.navbar-header a { padding-top: 15px; }
+.navbar-header .navbar-toggle { margin-top: 8px; }
 
 /* center modal popup */
 .modal {

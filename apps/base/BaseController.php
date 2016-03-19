@@ -10,6 +10,7 @@ class BaseController extends Controller
     const TAB_USER = 4;
 
     protected $USER = null;
+    protected $baseData = [];
 
     protected function initialize()
     {
@@ -25,10 +26,13 @@ class BaseController extends Controller
     {
         $this->view->setRenderLevel(\Phalcon\Mvc\View::LEVEL_NO_RENDER);
 
-        $result = array(
+        $result = [
             'res' => 1,
             'data' => $data,
-        );
+        ];
+        if (!empty($this->baseData)) {
+            $result['base'] = $this->baseData;
+        }
 
         header('Content-Type: application/json');
 
@@ -98,5 +102,10 @@ class BaseController extends Controller
     public function isAjax()
     {
         return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
+    }
+
+    public function updateBaseData($data)
+    {
+        $this->baseData = array_merge($this->baseData, $data);
     }
 }

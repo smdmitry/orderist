@@ -3,7 +3,7 @@
 class BaseDao
 {
     /**
-     * @var \Phalcon\Db\Adapter\Pdo\Mysql
+     * @var DriverDb
      */
     protected $db;
 
@@ -12,14 +12,5 @@ class BaseDao
     private function __construct()
     {
         $this->db = \Phalcon\DI::getDefault()->getDb();
-    }
-
-    protected function implodeBind($array)
-    {
-        $data = [];
-        foreach ($array as $value) {
-            $data[] = is_int($value) ? $value : $this->db->escapeString($value);
-        }
-        return implode(',', $data);
     }
 }

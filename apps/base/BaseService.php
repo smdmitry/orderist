@@ -20,4 +20,9 @@ class BaseService extends \Phalcon\DI\Injectable
     {
         return $this->setCookie($key, false, -1);
     }
+
+    public function formatMoney($amount)
+    {
+        return number_format($amount / 100, 2, '.', ' ');
+    }
 }

@@ -1,2 +1,43 @@
-Ваш баланс: <span class="label label-info"><span class="executer-price "><?=UserDao::i()->getField($USER, 'cash')?></span> руб.</span>
-, ещё <span class="label label-default order-comission"><?=UserDao::i()->getField($USER, 'hold')?> руб.</span> заблокировано.
+<div class="row col-md-10 col-md-offset-1">
+    <p>
+        Ваш баланс: <span class="label label-info"><span class="user-cash"><?=UserDao::i()->getField($USER, 'cash')?></span> руб.</span>
+        , ещё <span class="label label-default order-commission"><span class="user-hold"><?=UserDao::i()->getField($USER, 'hold')?></span> руб.</span> заблокировано.
+    </p>
+
+    <blockquote>
+        <a href="/user/cash/" onclick="orderist.user.addCash(10000); return false;" class="btn btn-xs btn-success">Пополнить счет на 100 руб.</a>
+        <a href="/user/cash/" onclick="orderist.user.addCash(-10000); return false;" class="btn btn-xs btn-warning">Вывести со счета 100 руб.</a>
+        <a href="/user/cash/" onclick="orderist.user.addCash(0); return false;" class="btn btn-xs btn-danger">Обнулить</a>
+        <small>сделано только для удобства тестирования</small>
+    </blockquote>
+
+    <? if (!empty($payments)): ?>
+        <h3>История транзакций</h3>
+        <table class="table table-striped table-hover" id="user-payments-block">
+            <thead>
+            <tr>
+                <th style="width: 250px;">Дата</th>
+                <th style="width: 200px;">Сумма</th>
+                <th>Описание</th>
+            </tr>
+            </thead>
+            <tbody>
+                <? include 'payments_block.phtml' ?>
+            </tbody>
+        </table>
+    <? endif ?>
+</div>
+
+<script>
+    $(window).scroll(function() {
+        if ($(window).scrollTop() + $(window).height() >= $(document).height() - 300) {
+            orderist.user.loadPayments();
+        }
+    });
+
+    $(document).ready(function() {
+        if ($(window).scrollTop() + $(window).height() >= $(document).height() - 300) {
+            orderist.user.loadPayments();
+        }
+    });
+</script>

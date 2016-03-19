@@ -6,5 +6,15 @@
     <li role="presentation" class="<?=$state === OrderDao::STATE_EXECUTED ? 'active' : ''?>"><a href="/user/orders/?state=<?=OrderDao::STATE_EXECUTED?>">Выполненные</a></li>
     <li role="presentation" class="<?=!$state ? 'active' : ''?>"><a href="/user/orders/?state=0">Все закакзы</a></li>
 </ul>
+
+<? if (empty($orders)): ?>
+    <?
+        $stateText = !$state ? '' : ($state === OrderDao::STATE_NEW ? ' активных' : ' выполненных');
+    ?>
+    <h4>
+        У вас нет<?=$stateText?> заказов. Вы можете <a href="/order/creat/" onclick="orderist.order.createPopup(); return false;">разместить новый заказ</a>.
+    </h4>
+<? endif ?>
+
 <? include '/var/www/apps/views/index/orders.phtml' ?>
 

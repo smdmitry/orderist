@@ -30,6 +30,10 @@ var orderist = {
             return data;
         },
         processResponse: function(response) {
+            if (response.base) {
+                response.base.cash && $('.user-cash').html(response.base.cash);
+                response.base.hold && $('.user-hold').html(response.base.hold);
+            }
             if (response.data) {
                 if (response.data.error && response.data.error == 'auth') {
                     orderist.user.login();
@@ -105,6 +109,33 @@ var orderist = {
             orderist.core.post('/user/signup/', data, function (response) {
                 orderist.core.processResponse(response);
             });
+        },
+        addCash: function(amount) {
+            orderist.core.post('/user/addcash/', {amount: amount}, function (response) {
+                orderist.core.processResponse(response);
+                orderist.user.reloadPayments();
+            });
+        },
+        isLoading: false,
+        isFinished: false,
+        loadMoreUrl: '/user/getpaymentspage/',
+        loadPayments: function() {
+            if (orderist.user.isLoading || orderist.user.isFinished) return;
+
+            orderist.user.isLoading = true;
+
+            var lastPaymentId = $('.user-payment-block:last').data('id');
+            orderist.core.post(orderist.user.loadMoreUrl, {last_payment_id: lastPaymentId}, function (response) {
+                if (!response.has_next) orderist.user.isFinished = false;
+                orderist.user.isLoading = false;
+                $('#user-payments-block tbody').append(response.data.html);
+            });
+        },
+        reloadPayments: function() {
+            if ($('#user-payments-block').length) {
+                $('#user-payments-block tbody').html('');
+                orderist.user.loadPayments();
+            }
         }
     },
     order: {
@@ -117,15 +148,20 @@ var orderist = {
                     $('#order-create-popup input[name=order_price]').bind('input', function() {
                         var price = $(this).val().replace(/[^0-9\.]/g, '');
                         var popup = $('#order-create-popup');
-                        var comission = $('.order-comission', popup).data('value');
-                        $('.executer-price', popup).html((price - price * comission).toFixed(2));
+                        var commission = $('.order-commission', popup).data('value');
+                        $('.executer-price', popup).html((price - price * commission).toFixed(2));
                     });
                 }
             });
         },
         create: function() {
+            var popup = $('#order-create-popup');
             orderist.core.post('/order/create/', orderist.core.formData($('form', popup)), function (response) {
-
+                if (orderist.core.processResponse(response)) {
+                    $('input', popup).attr('disabled', 'disabled');
+                    $('.modal-footer', popup).hide();
+                    $('.modal-footer.ok', popup).show();
+                }
             });
         },
         execute: function (orderId) {
@@ -135,12 +171,11 @@ var orderist = {
                     $('#order-'+orderId+' button').html('Заказ выполнен');
                 }
 
-                    if (orderist.core.processResponse(response)) {
-                        $('#order-'+orderId).addClass('disabled');
-                        $('#order-'+orderId+' .order-get-text').html('Вы получили:');
-                        $('#order-'+orderId+' button').html('Заказ выполнен');
-                    }
-
+                if (orderist.core.processResponse(response)) {
+                    $('#order-'+orderId).addClass('disabled');
+                    $('#order-'+orderId+' .order-get-text').html('Вы получили:');
+                    $('#order-'+orderId+' button').html('Заказ выполнен');
+                }
             });
         },
         expand: function(id) {

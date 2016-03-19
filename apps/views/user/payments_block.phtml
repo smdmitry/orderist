@@ -1,0 +1,13 @@
+<? foreach ($payments as $payment): ?>
+    <tr class="user-payment-block <?=$payment['amount'] < 0 ? 'negative': 'positive'?>" data-id="<?=$payment['id']?>">
+        <td><?=date('Y-m-d H:i:s', $payment['inserted'])?></td>
+        <td><?=BaseService::i()->formatMoney($payment['amount'])?></td>
+        <td>
+            <? if (!empty($payment['order_id'])): ?>
+                <?=$payment['amount'] < 0 ? 'Списание': 'Оплата'?> за заказ #<?=$payment['order_id']?>
+            <? else: ?>
+                <?=$payment['amount'] < 0 ? 'Вывод': 'Ввод'?> средств
+            <? endif ?>
+        </td>
+    </tr>
+<? endforeach ?>

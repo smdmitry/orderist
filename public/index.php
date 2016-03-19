@@ -1,6 +1,6 @@
 <?php
 
-error_reporting(E_ALL | E_STRICT);
+error_reporting(E_ALL ^ E_STRICT);
 ini_set('display_errors', 1);
 mb_internal_encoding('UTF-8');
 
@@ -22,6 +22,7 @@ class Application extends BaseApplication
 
 		$loader->registerDirs(array(
 			'../apps/base/',
+			'../apps/lib/',
 			'../apps/controllers/',
 			'../apps/dao/',
 			'../apps/models/'
@@ -78,17 +79,17 @@ class Application extends BaseApplication
 		});*/
 
 		$di->set('db', function() {
-			return new \Phalcon\Db\Adapter\Pdo\Mysql(array(
-				"host" => "localhost",
-				"username" => "orderist",
-				"password" => "zeMjPeBKeEu5nSpmmVqh",
-				"dbname" => "orderist",
+			return new DriverDb([
+				'host' => 'localhost',
+				'username' => 'orderist',
+				'password' => 'zeMjPeBKeEu5nSpmmVqh',
+				'dbname' => 'orderist',
 				'charset' => 'utf8',
-				'options' => array(
-					PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES \'UTF8\'',
+				'options' => [
+					PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES 'UTF8'",
 					PDO::ATTR_CASE => PDO::CASE_LOWER,
-				),
-			));
+				],
+			]);
 		});
 
 		$this->setDI($di);

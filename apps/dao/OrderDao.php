@@ -2,8 +2,12 @@
 
 class OrderDao extends BaseDao
 {
+    const TABLE_ORDERS = 'order_orders';
+
     const STATE_NEW = 1;
     const STATE_EXECUTED = 2;
+
+    const COMMISSION = 0.18;
 
     public function getById($id)
     {
@@ -17,8 +21,25 @@ class OrderDao extends BaseDao
             return [];
         }
 
-        $select = "SELECT * FROM order_orders WHERE id IN (". $this->implodeBind($ids) .");";
-        return $this->db->fetchAll($select, Phalcon\Db::FETCH_ASSOC);
+        $select = $this->db->select()->from(self::TABLE_ORDERS)->where('id IN (?)', [$ids]);
+        return $this->db->fetchAssoc($select);
+    }
+
+    public function prepareOrders($orders)
+    {
+        if (array_key_exists('id', $orders)) {
+            $orders = [$orders];
+        }
+
+        $userIds = array_column($orders, 'user_id');
+        $userIds = array_unique($userIds);
+        $users = UserDao::i()->getByIds($userIds);
+
+        foreach ($orders as $k => $record) {
+            $orders[$k]['user'] = $users[$record['user_id']];
+        }
+
+        return $orders;
     }
 
     public function getOrders($state, $limit = 10, $lastOrderId = 0)
@@ -36,57 +57,42 @@ class OrderDao extends BaseDao
         $limit = (int)$limit;
         $state = (int)$state;
 
-        $params = [];
-
-        $select = "SELECT * FROM order_orders WHERE 1=1";
-
+        $select = $this->db->select()->from(self::TABLE_ORDERS)->order('id DESC')->limit($limit);
         if ($state) {
-            $select .= " AND state = ?";
-            $params[] = $state;
+            $select->where('state = ?', $state);
         }
-
         if ($userId) {
-            $select .= " AND user_id = ?";
-            $params[] = $userId;
+            $select->where('user_id = ?', $userId);
         }
-
         if ($lastOrderId) {
-            $select .= " AND id < ?";
-            $params[] = $lastOrderId;
+            $select->where('id < ?', $lastOrderId);
         }
 
-        $select .= " ORDER BY id DESC LIMIT {$limit};";
-
-        return $this->db->fetchAll($select, Phalcon\Db::FETCH_ASSOC, $params);
+        return $this->db->fetchAssoc($select);
     }
 
+    public function addOrder($userId, $title, $description, $price)
+    {
+        $res = $this->db->insert(self::TABLE_ORDERS, [
+            'user_id' => $userId,
+            'state' => self::STATE_NEW,
+            'price' => $price,
+            'title' => $title,
+            'description' => $description,
+            'inserted' => time(),
+        ]);
+        return $res ? $this->db->lastInsertId() : false;
+    }
 
     public function execute($orderId, $userId)
     {
         $orderId = (int)$orderId;
         $state = self::STATE_NEW;
 
-        $where = "id = {$orderId} AND state = {$state}";
-
-        $res = $this->db->updateAsDict('order_orders', [
+        $res = $this->db->update(self::TABLE_ORDERS, [
             'state' => self::STATE_EXECUTED,
             'executer_id' => $userId,
-        ], $where);
-
-        return $res;
-    }
-
-    public function update($orderId, $userId)
-    {
-        $orderId = (int)$orderId;
-        $state = self::STATE_NEW;
-
-        $where = "id = {$orderId} AND state = {$state}";
-
-        $res = $this->db->updateAsDict('order_orders', [
-            'state' => self::STATE_EXECUTED,
-            'executer_id' => $userId,
-        ], $where);
+        ], $this->db->qq("id = ? AND state = ?", [$orderId, $state]));
 
         return $res;
     }

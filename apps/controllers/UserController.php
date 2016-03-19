@@ -3,6 +3,7 @@
 class UserController extends BaseController
 {
 	const ORDERS_PER_PAGE = 5;
+    const PAYMENTS_PER_PAGE = 10;
 
 	public function indexAction()
 	{
@@ -17,6 +18,7 @@ class UserController extends BaseController
 
 		$state = (int)$this->p('state', OrderDao::STATE_NEW);
 		$orders = OrderDao::i()->getUserOrders($this->USER['id'], $state, self::ORDERS_PER_PAGE);
+        $orders = OrderDao::i()->prepareOrders($orders);
 
 		$this->view->state = $state;
 		$this->view->orders = $orders;
@@ -25,7 +27,7 @@ class UserController extends BaseController
 	}
 	public function getorderspageAction()
 	{
-        if ($this->USER) {
+        if (!$this->USER) {
             return $this->ajaxSuccess(['redirect' => '/orders/']);
         }
 
@@ -33,6 +35,7 @@ class UserController extends BaseController
 		$state = (int)$this->p('state', 0);
 
 		$orders = OrderDao::i()->getUserOrders($this->USER['id'], $state, self::ORDERS_PER_PAGE, $lastOrderId);
+        $orders = OrderDao::i()->prepareOrders($orders);
 		$this->view->orders = $orders;
 
 		$hasNext = count($orders) >= self::ORDERS_PER_PAGE;
@@ -47,8 +50,33 @@ class UserController extends BaseController
 
 	public function cashAction()
 	{
+        if (!$this->USER) {
+            return $this->ajaxSuccess(['redirect' => '/']);
+        }
+
 		$this->view->navTab = self::TAB_CASH;
+        $this->view->payments = UserDao::i()->getUserPayments($this->USER['id'], self::PAYMENTS_PER_PAGE);
 	}
+    public function getpaymentspageAction()
+    {
+        if (!$this->USER) {
+            return $this->ajaxSuccess(['redirect' => '/']);
+        }
+
+        $lastPaymentId = (int)$this->p('last_payment_id', 0);
+
+        $payments = UserDao::i()->getUserPayments($this->USER['id'], self::PAYMENTS_PER_PAGE, $lastPaymentId);
+        $this->view->payments = $payments;
+
+        $hasNext = count($payments) >= self::PAYMENTS_PER_PAGE;
+
+        $data = [
+            'html' => $this->renderView('user/payments_block'),
+            'has_next' => $hasNext,
+        ];
+
+        $this->ajaxSuccess($data);
+    }
 
 	public function signupAction()
 	{
@@ -121,4 +149,29 @@ class UserController extends BaseController
 		BaseAuth::i()->logout();
 		return $this->redirect('/');
 	}
+
+    public function addcashAction()
+    {
+        $amount = (int)$this->p('amount');
+
+        if (UserDao::i()->lock($this->USER['id'])) {
+            if ($amount == 0) {
+                if ($this->USER['cash'] != 0) {
+                    UserDao::i()->addMoney($this->USER['id'], -$this->USER['cash'], -$this->USER['hold']);
+                }
+            } else {
+                UserDao::i()->addMoney($this->USER['id'], $amount);
+            }
+
+            UserDao::i()->unlock($this->USER['id']);
+        }
+
+        $user = UserDao::i()->getById($this->USER['id']);
+        $this->updateBaseData([
+            'cash' => UserDao::i()->getField($user, 'cash'),
+            'hold' => UserDao::i()->getField($user, 'hold'),
+        ]);
+
+        return $this->ajaxSuccess();
+    }
 }
