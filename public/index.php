@@ -104,5 +104,7 @@ try {
 	$view = new \Phalcon\Mvc\View();
 	$view->setViewsDir('../apps/views/layouts');
 	$view->message = $e->getMessage();
+	header('HTTP/1.1 503 Service Temporarily Unavailable');
+	header('Status: 503 Service Temporarily Unavailable');
 	echo $view->partial('error');
 }
