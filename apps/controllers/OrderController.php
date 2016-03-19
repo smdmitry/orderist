@@ -76,10 +76,7 @@ class OrderController extends BaseController
         }
 
         $user = UserDao::i()->getById($user['id']);
-        $this->updateBaseData([
-            'cash' => UserDao::i()->getField($user, 'cash'),
-            'hold' => UserDao::i()->getField($user, 'hold'),
-        ]);
+        $this->updateUserData($user);
 
         return !empty($orderId) && $orderId ? $this->ajaxSuccess() : $this->ajaxError([
             'error' => 'Произошла ошибка, попробуйте ещё раз.',
@@ -132,9 +129,7 @@ class OrderController extends BaseController
         }
 
         $user = UserDao::i()->getById($this->USER['id']);
-        $this->updateBaseData([
-            'cash' => UserDao::i()->getField($user, 'cash'),
-        ]);
+        $this->updateUserData($user);
 
         return $res ? $this->ajaxSuccess() : $this->ajaxError([
             'error' => 'Произошла ошибка, попробуйте ещё раз.',

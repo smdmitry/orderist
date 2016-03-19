@@ -6,6 +6,6 @@ class BaseTag extends Tag
 {
     public static function path($file)
     {
-        return '//orderist.smd.im' . $file . '?v=2';
+        return '//' . \Phalcon\DI::getDefault()->getConfig()['static'] . $file . '?v=2';
     }
 }

@@ -4,7 +4,8 @@ class BaseAuth extends \Phalcon\DI\Injectable
 {
     private $_salt = 'Ibcj;cdfA~\cj3mU`k]>$]O4[qksMJl;*7';
 
-    public static function i() { static $instance; if (empty($instance)) $instance = new static(); return $instance; }
+    public static function i() { static $instance; if (empty($instance)) $instance = new static(); return $instance;}
+    protected function __construct() {}
 
     public function authUser($user)
     {
@@ -42,13 +43,8 @@ class BaseAuth extends \Phalcon\DI\Injectable
         BaseService::i()->deleteCookie('hw');
     }
 
-    public function getAuthHash($id, $email, $password)
+    private function getAuthHash($id, $email, $password)
     {
         return md5($this->_salt . '_' . $id . $email . $password);
-    }
-
-    public function getEmailApproveHash($user)
-    {
-        return md5($this->_salt . '_approve_' . $user['id'] . '_' . $user['email']);
     }
 }

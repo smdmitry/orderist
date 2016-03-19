@@ -1,6 +1,6 @@
 <?php
 
-class DriverSelect
+class DbDriverSelect
 {
     private $string = [];
 
@@ -56,7 +56,7 @@ class DriverSelect
     }
 
     /**
-     * @return DriverSelect
+     * @return DbDriverSelect
      */
     public function having($having)
     {
@@ -67,7 +67,7 @@ class DriverSelect
     /**
      * @param int $count
      * @param int $offset
-     * @return DriverSelect
+     * @return DbDriverSelect
      */
     public function limit($count, $offset = 0)
     {
@@ -78,17 +78,17 @@ class DriverSelect
     }
 
     /**
-     * @return DriverSelect
+     * @return DbDriverSelect
      */
     public function order($spec)
     {
         if (is_array($spec)) {
-            foreach ($spec as $i => &$v) $v = DriverSql::quoteIdentifier($v);
+            foreach ($spec as $i => &$v) $v = DbDriverBase::quoteIdentifier($v);
             $spec = implode(', ', $spec);
-        } elseif ($spec instanceof DriverExpr) {
+        } elseif ($spec instanceof DbDriverExpr) {
             $spec = $spec->__toString();
         } else {
-            $spec = DriverSql::quoteIdentifier($spec);
+            $spec = DbDriverBase::quoteIdentifier($spec);
         }
         $spec = str_ireplace(array(' ASC`', ' DESC`'), array('` ASC', '` DESC'), $spec);
         if (!mb_stripos($spec, 'ASC') && !mb_stripos($spec, 'DESC')) $spec .= ' ASC';
@@ -101,17 +101,17 @@ class DriverSelect
     }
 
     /**
-     * @return DriverSelect
+     * @return DbDriverSelect
      */
     public function group($spec)
     {
         if (is_array($spec)) {
-            foreach ($spec as $i => &$v) $v = DriverSql::quoteIdentifier($v);
+            foreach ($spec as $i => &$v) $v = DbDriverBase::quoteIdentifier($v);
             $spec = implode(', ', $spec);
-        } elseif ($spec instanceof DriverExpr) {
+        } elseif ($spec instanceof DbDriverExpr) {
             $spec = $spec->__toString();
         } else {
-            $spec = DriverSql::quoteIdentifier($spec);
+            $spec = DbDriverBase::quoteIdentifier($spec);
         }
 
         $this->string['group'] = "GROUP BY $spec";
@@ -119,7 +119,7 @@ class DriverSelect
     }
 
     /**
-     * @return DriverSelect
+     * @return DbDriverSelect
      */
     public function useIndex($indexName)
     {
@@ -128,7 +128,7 @@ class DriverSelect
     }
 
     /**
-     * @return DriverSelect
+     * @return DbDriverSelect
      */
     public function forceIndex($indexName)
     {
@@ -137,7 +137,7 @@ class DriverSelect
     }
 
     /**
-     * @return DriverSelect
+     * @return DbDriverSelect
      */
     public function from($name, $cols = ['*'])
     {
@@ -158,17 +158,17 @@ class DriverSelect
     private function _tableQuoted($name)
     {
         if (is_array($name)) {
-            foreach ($name as $k => $v) $tableSql = DriverSql::quoteIdentifier($v)." AS ".DriverSql::quoteIdentifier($k);
-        } elseif ($name instanceof DriverExpr) {
+            foreach ($name as $k => $v) $tableSql = DbDriverBase::quoteIdentifier($v)." AS ".DbDriverBase::quoteIdentifier($k);
+        } elseif ($name instanceof DbDriverExpr) {
             $tableSql = $name->__toString();
         } else {
-            $tableSql = DriverSql::quoteIdentifier($name);
+            $tableSql = DbDriverBase::quoteIdentifier($name);
         }
         return $tableSql;
     }
 
     /**
-     * @return DriverSelect
+     * @return DbDriverSelect
      */
     public function columns($cols, $table = null)
     {
@@ -180,15 +180,15 @@ class DriverSelect
             if (!is_array($cols)) $cols = [$cols];
             foreach ($cols as $ascol => $expr) {
                 if (is_int($ascol)) {
-                    if ($expr instanceof DriverExpr) {
+                    if ($expr instanceof DbDriverExpr) {
                         $col = $expr->__toString();
                     } else {
-                        $col = ($table && !mb_strpos($expr, '(') && !mb_strpos($expr, '.') ? DriverSql::quoteIdentifier($table)."." : '')
-                            . DriverSql::quoteIdentifier($expr);
+                        $col = ($table && !mb_strpos($expr, '(') && !mb_strpos($expr, '.') ? DbDriverBase::quoteIdentifier($table)."." : '')
+                            . DbDriverBase::quoteIdentifier($expr);
                     }
                 } else {
-                    $col = ($table && !mb_strpos($expr, '(') && !mb_strpos($expr, '.') ? DriverSql::quoteIdentifier($table).".".Driver_Sql::quoteIdentifier($expr) : $expr)
-                        . " AS ".DriverSql::quoteIdentifier($ascol);
+                    $col = ($table && !mb_strpos($expr, '(') && !mb_strpos($expr, '.') ? DbDriverBase::quoteIdentifier($table).".".Driver_Sql::quoteIdentifier($expr) : $expr)
+                        . " AS ".DbDriverBase::quoteIdentifier($ascol);
                 }
                 if (!isset($this->string['columns'])) {
                     $this->string['columns'] = [];
@@ -200,7 +200,7 @@ class DriverSelect
     }
 
     /**
-     * @return DriverSelect
+     * @return DbDriverSelect
      */
     private function _join($type, $name, $cond, $cols = ['*'])
     {
@@ -218,7 +218,7 @@ class DriverSelect
     }
 
     /**
-     * @return DriverSelect
+     * @return DbDriverSelect
      */
     public function joinLeft($name, $cond, $cols = ['*'])
     {
@@ -226,7 +226,7 @@ class DriverSelect
     }
 
     /**
-     * @return DriverSelect
+     * @return DbDriverSelect
      */
     public function join($name, $cond, $cols = ['*'])
     {
@@ -234,7 +234,7 @@ class DriverSelect
     }
 
     /**
-     * @return DriverSelect
+     * @return DbDriverSelect
      */
     public function joinInner($name, $cond, $cols = ['*'])
     {
@@ -242,17 +242,17 @@ class DriverSelect
     }
 
     /**
-     * @return DriverSelect
+     * @return DbDriverSelect
      */
     public function where($cond, $value = null)
     {
         if (is_array($value)) {
-            foreach ($value as $i => &$v) $v = DriverSql::quote($v);
+            foreach ($value as $i => &$v) $v = DbDriverBase::quote($v);
             $value = implode(', ', $value);
-        } elseif ($value instanceof DriverExpr) {
+        } elseif ($value instanceof DbDriverExpr) {
             $value = $value->__toString();
         } else {
-            $value = DriverSql::quote($value);
+            $value = DbDriverBase::quote($value);
         }
         $cond = str_replace('?', $value, $cond);
         if (!isset($this->string['where'])){

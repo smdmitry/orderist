@@ -1,9 +1,5 @@
 <?php
 
-error_reporting(E_ALL ^ E_STRICT);
-ini_set('display_errors', 1);
-mb_internal_encoding('UTF-8');
-
 use Phalcon\DI;
 use Phalcon\Loader;
 use Phalcon\Mvc\Router;
@@ -33,7 +29,9 @@ class Application extends BaseApplication
 
 	protected function registerServices()
 	{
-		$di = new DI();
+		$di = $this->getDI();
+
+		$settings = $di->get('settings');
 
 		$di->set('router', function() {
 			$router = new Router();
@@ -47,6 +45,10 @@ class Application extends BaseApplication
 			);
 
 			return $router;
+		});
+
+		$di->set('config', function() use ($settings) {
+			return $settings['config'];
 		});
 
 		$di->set('dispatcher', function() {
@@ -64,7 +66,6 @@ class Application extends BaseApplication
 		$di->set('view', function() {
 			$view = new View();
 			$view->setViewsDir('../apps/views/');
-			//$view->setPartialsDir('../apps/views/');
 			$view->setLayout('main');
 			return $view;
 		});
@@ -72,40 +73,28 @@ class Application extends BaseApplication
 			return new BaseTag();
 		});
 
-		/*$di->set('cookies', function() {
-			$cookies = new Phalcon\Http\Response\Cookies();
-			$cookies->useEncryption(false);
-			return $cookies;
-		});*/
-
-		$di->set('db', function() {
-			return new DriverDb([
-				'host' => 'localhost',
-				'username' => 'orderist',
-				'password' => 'zeMjPeBKeEu5nSpmmVqh',
-				'dbname' => 'orderist',
-				'charset' => 'utf8',
-				'options' => [
-					PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES 'UTF8'",
-					PDO::ATTR_CASE => PDO::CASE_LOWER,
-				],
-			]);
+		$di->set('db', function() use ($settings) {
+			return new DbDriverBase($settings['database']);
 		});
-
-		$this->setDI($di);
 	}
 
 	public function main()
 	{
 		$this->registerServices();
 		$this->registerAutoloaders();
-
 		echo $this->handle()->getContent();
 	}
 }
 
 try {
-	$application = new Application();
+	require '../apps/config/base.php';
+
+	$di = new DI();
+	$di->set('settings', function() use ($settings) {
+		return $settings;
+	});
+
+	$application = new Application($di);
 	$application->main();
 
 	if (BackgroundWorker::i()->hasJob()) {

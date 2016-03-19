@@ -16,10 +16,13 @@ class BaseController extends Controller
     {
         $user = BaseAuth::i()->getAuthUser();
 
-        $this->USER = $user;
-        $this->view->USER = $user;
+        $this->user = $this->USER = $user;
+        $this->view->user = $this->view->USER = $user;
 
         $this->view->e = new Phalcon\Escaper();
+
+        $this->view->navTab = 0;
+        $this->view->staticDomain = \Phalcon\DI::getDefault()->getConfig()['static'];
     }
 
     protected function ajaxSuccess($data = null)
@@ -92,19 +95,23 @@ class BaseController extends Controller
         return $this->response->redirect($url, true, $code)->sendHeaders();
     }
 
-    public function beforeExecuteRoute($dispatcher)
-    {
-        $this->view->USER = $this->USER;
-        $this->view->navTab = 0;
-        $this->view->staticDomain = 'orderist.smd.im';
-    }
-
     public function isAjax()
     {
         return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
     }
 
-    public function updateBaseData($data)
+    public function updateUserData($user = null)
+    {
+        $user = $user ? $user : $this->USER;
+        if (!empty($user)) {
+            $this->updateBaseData([
+                'cash' => UserDao::i()->getField($user, 'cash'),
+                'hold' => UserDao::i()->getField($user, 'hold'),
+            ]);
+        }
+    }
+
+    private function updateBaseData($data)
     {
         $this->baseData = array_merge($this->baseData, $data);
     }

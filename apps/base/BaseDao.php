@@ -3,7 +3,7 @@
 class BaseDao
 {
     /**
-     * @var DriverDb
+     * @var DbDriverBase
      */
     protected $db;
 

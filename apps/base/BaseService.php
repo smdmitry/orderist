@@ -2,13 +2,14 @@
 
 class BaseService extends \Phalcon\DI\Injectable
 {
-    public static function i() { static $instance; if (empty($instance)) $instance = new static(); return $instance; }
+    public static function i() { static $instance; if (empty($instance)) $instance = new static(); return $instance;}
+    protected function __construct() {}
 
     public function setCookie($key, $value, $ttl, $path = '/')
     {
         $_COOKIE[$key] = $value;
         $expire = time() + $ttl;
-        setcookie($key, $value, $expire, $path, '.orderist.smdmitry.com', false, false);
+        setcookie($key, $value, $expire, $path, '.'.\Phalcon\DI::getDefault()->getConfig()['domain'], false, false);
     }
 
     public function getCookie($key, $default = null)

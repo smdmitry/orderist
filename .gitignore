@@ -2,3 +2,4 @@ Phalcon
 .idea
 public/adminer.php
 public/mysql.php
+override.php

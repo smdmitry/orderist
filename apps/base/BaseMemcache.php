@@ -7,13 +7,12 @@ class BaseMemcache extends \Phalcon\DI\Injectable
      */
     protected $mc;
 
+    public static function i() { static $instance; if (empty($instance)) $instance = new static(); return $instance; }
     private function __construct()
     {
         $this->mc = new Memcached();
         $this->mc->addServer('127.0.0.1', 11211);
     }
-
-    public static function i() { static $instance; if (empty($instance)) $instance = new static(); return $instance; }
 
     public function get($key)
     {

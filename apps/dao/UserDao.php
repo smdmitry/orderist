@@ -113,8 +113,8 @@ class UserDao extends BaseDao
         }
 
         $res = $this->db->update(self::TABLE_USER, [
-            'cash' => new DriverExpr($this->db->qq('cash + ?', $amount)),
-            'hold' => new DriverExpr($this->db->qq('hold + ?', $hold)),
+            'cash' => $this->db->expr('cash + ?', $amount),
+            'hold' => $this->db->expr('hold + ?', $hold),
         ], $this->db->qq('id = ?', $userId));
 
         return $res ? $paymentId : false;

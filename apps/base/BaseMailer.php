@@ -10,23 +10,21 @@ class BaseMailer extends \Phalcon\DI\Injectable
     public static function i() { static $instance; if (empty($instance)) $instance = new static(); return $instance;}
     protected function __construct()
     {
-        return false; // Todo: do
-
-        require_once '../app/library/PHPMailer/PHPMailerAutoload.php';
+        require_once '../apps/lib/PHPMailer/PHPMailerAutoload.php';
 
         $mail = new PHPMailer();
 
-        $config = $this->config;
+        $config = $this->config['mail'];
 
         $mail->CharSet = 'utf-8';
         $mail->isSMTP();
-        $mail->Host = $config->mail->smtp;
+        $mail->Host = $config['smtp'];
         $mail->SMTPAuth = true;
-        $mail->Username = $config->mail->login;
-        $mail->Password = $config->mail->password;
+        $mail->Username = $config['login'];
+        $mail->Password = $config['password'];
         $mail->SMTPSecure = 'tls';
 
-        $mail->From = $config->mail->email;
+        $mail->From = $config['email'];
         $mail->FromName = 'Заказист';
 
         $mail->WordWrap = 50;
@@ -55,14 +53,12 @@ class BaseMailer extends \Phalcon\DI\Injectable
         return isset($types[$typeId]) ? $types[$typeId] : false;
     }
 
-    public function sendByType($user, $typeId, $data = array())
+    public function sendByType($user, $typeId, $data = [])
     {
-        return false; // Todo: do
-
         $config = $this->getType($typeId);
 
         $view = new Phalcon\Mvc\View\Simple();
-        $view->setViewsDir('../app/views/');
+        $view->setViewsDir('../apps/views/');
 
         if (!empty($user['email'])) {
             $this->_mail->addAddress($user['email']);
@@ -79,9 +75,6 @@ class BaseMailer extends \Phalcon\DI\Injectable
 
         $this->_mail->Subject = $config['subject'];
         $this->_mail->msgHTML($html);
-
-        //$res = $this->_mail->send();
-        //return $res;
 
         $mail = $this->_mail;
         BackgroundWorker::i()->addJob(function() use ($mail) {

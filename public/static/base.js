@@ -30,6 +30,10 @@ var orderist = {
             return data;
         },
         processResponse: function(response) {
+            var errorBlock = $('.errors-block:visible');
+            var wasBlock = errorBlock.html();
+            errorBlock.html('');
+
             if (response.base) {
                 response.base.cash && $('.user-cash').html(response.base.cash);
                 response.base.hold && $('.user-hold').html(response.base.hold);
@@ -47,9 +51,6 @@ var orderist = {
                     orderist.nav.go(response.data.redirect);
                     return true;
                 } else {
-                    var errorBlock = $('.errors-block:visible');
-                    var wasBlock = errorBlock.html();
-
                     if (response.data.errors && response.data.errors.length) {
                         errorBlock.html('');
                         $.each(response.data.errors, function(i, error) {

@@ -102,7 +102,9 @@ class UserController extends BaseController
 				$user = UserDao::i()->getById($res);
 
 				BaseAuth::i()->authUser($user);
-				BaseMailer::i()->sendByType($user, BaseMailer::TYPE_SIGNUP);
+				BaseMailer::i()->sendByType($user, BaseMailer::TYPE_SIGNUP, [
+                    'password' => $password,
+                ]);
 
 				return $this->ajaxSuccess(['redirect' => '/orders/']);
 			}
@@ -167,10 +169,7 @@ class UserController extends BaseController
         }
 
         $user = UserDao::i()->getById($this->USER['id']);
-        $this->updateBaseData([
-            'cash' => UserDao::i()->getField($user, 'cash'),
-            'hold' => UserDao::i()->getField($user, 'hold'),
-        ]);
+        $this->updateUserData($user);
 
         return $this->ajaxSuccess();
     }
