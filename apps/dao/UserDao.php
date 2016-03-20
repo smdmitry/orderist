@@ -5,31 +5,33 @@ class UserDao extends BaseDao
     const TABLE_USER = 'order_users';
     const TABLE_PAYMENTS = 'order_payments';
 
+    const MC_KEY = 'user:';
+    const MC_TIME = 86400; // 24 часа
+
     public function getById($id)
     {
         $ids = $this->getByIds([$id]);
         return reset($ids);
     }
 
-    public function getByIds($ids)
+    public function getByIds($userIds)
     {
-        if (empty($ids)) {
-            return [];
-        }
+        return $this->getDataByIdsWithMemcache($userIds, [$this, 'getUsersFromDb'], self::MC_KEY, self::MC_TIME, []);
+    }
 
-        $select = $this->db->select()->from(self::TABLE_USER)->where('id IN (?)', [$ids]);
+    public function getUsersFromDb($userIds)
+    {
+        foreach ($userIds as &$userId) {
+            $userId = (int)$userId;
+        } unset($userId);
+
+        $select = $this->db->select()->from(self::TABLE_USER)->where('id IN (?)', [$userIds]);
         return $this->db->fetchAssoc($select);
     }
 
-    public function getByEmailPassword($email, $password)
+    private function clearCache($userId)
     {
-        $user = $this->getByEmail($email);
-
-        if (!$user) {
-            return false;
-        }
-
-        return password_verify($password, $user['password']) ? $user : false;
+        return BaseMemcache::i()->delete(self::MC_KEY.$userId);
     }
 
     public function getByEmail($email)
@@ -55,8 +57,16 @@ class UserDao extends BaseDao
             'email' => $email,
             'password' => $phash,
             'inserted' => time(),
+            'updated' => time(),
         ]);
-        return $res ? $this->db->lastInsertId() : false;
+
+        if ($res) {
+            $id = $this->db->lastInsertId();
+            $this->clearCache($id);
+            return $id;
+        }
+
+        return false;
     }
 
     public function addUser($name, $email, $password)
@@ -94,12 +104,23 @@ class UserDao extends BaseDao
 
     protected function _update($userId, $bind)
     {
+        $bind['updated'] = time();
         $res = $this->db->update(self::TABLE_USER, $bind, $this->db->qq("id = ?", $userId));
+
+        if ($res) {
+            $this->clearCache($userId);
+        }
+
         return $res;
     }
 
     public function updateMoney($userId, $amount, $hold = 0, $orderId = 0)
     {
+        $userId = (int)$userId;
+        $amount = (int)$amount;
+        $hold = (int)$hold;
+        $orderId = (int)$orderId;
+
         if ($amount != 0) {
             $res = $this->db->insert(self::TABLE_PAYMENTS, [
                 'user_id' => $userId,
@@ -116,27 +137,24 @@ class UserDao extends BaseDao
             $paymentId = true;
         }
 
-        $res = $this->db->update(self::TABLE_USER, [
+        $update = [
             'cash' => $this->db->expr('cash + ?', $amount),
-            'hold' => $this->db->expr('hold + ?', $hold),
-        ], $this->db->qq('id = ?', $userId));
+            'hold' => $this->db->expr('IF(hold + ? <= 0, 0, hold + ?)', [$hold, $hold]),
+        ];
+        if ($paymentId !== true && $paymentId) {
+            $update['payment_id'] = $paymentId;
+        }
+
+        $res = $this->_update($userId, $update);
 
         return $res ? $paymentId : false;
     }
 
-    public function lock($userId)
-    {
-        return BaseMemcache::i()->add('userCashLock:' . $userId, 1, 10);
-    }
-
-    public function unlock($userId)
-    {
-        return BaseMemcache::i()->delete('userCashLock:' . $userId);
-    }
-
     public function getUserPayments($userId, $limit, $lastPaymentId = 0)
     {
+        $userId = (int)$userId;
         $limit = (int)$limit;
+        $lastPaymentId = (int)$lastPaymentId;
 
         $select = $this->db->select()->from(self::TABLE_PAYMENTS)->order('id DESC')->limit($limit);
         if ($userId) {

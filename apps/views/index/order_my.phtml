@@ -1,0 +1,49 @@
+<?
+$price = $order['price'] / 100;
+
+$descLenthLimit = 350;
+$description = $order['description'];
+$expandable = mb_strlen($description) >= $descLenthLimit;
+?>
+<div id="order-<?=$order['id']?>" data-id="<?=$order['id']?>" class="row col-md-10 col-md-offset-1 order-block<?=$order['state'] != OrderDao::STATE_NEW ? ' disabled' : ''?><?=$expandable ? ' expandable' : ''?>"
+     onclick="orderist.order.expand('<?=$order['id']?>')">
+    <div class="order-price" style="text-align: right;">
+        <div class="order-get-text" style="margin-bottom: 10px; font-size: 12px; color: gray;">Вы заплатите:</div>
+        <span class="label label-info"><?=number_format($price, 2, ',', ' ')?> р.</span>
+    </div>
+
+    <div class="order-title">
+        <?=$order['title']?>
+    </div>
+
+    <div class="order-desc">
+        <? if ($expandable): ?>
+            <?=mb_substr($description, 0, $descLenthLimit) . '<span class="more">...</span>'?>
+            <span class="collapsed" style="display: none;"><?=mb_substr($description, $descLenthLimit)?></span>
+            <a href="/order/<?=$order['id']?>/" class="hyp" onclick="orderist.order.expand('<?=$order['id']?>'); return false;">Показать полностью</a>
+        <? else: ?>
+            <?=$description?>
+        <? endif ?>
+    </div>
+
+    <div class="order-footer">
+        <div class="order-date">
+            От: <?=$order['user']['name']?>, создан: <?=date('Y-m-d H:i:s', $order['inserted'])?>
+        </div>
+        <div class="order-buttons">
+            <? if ($order['state'] == OrderDao::STATE_NEW): ?>
+                <span class="loader"></span>
+                <button type="button" onclick="orderist.popup.confirm('Вы уверены, что хотите удалить заказ?', 'Отмена', 'Удалить', function(result) {
+                            result && orderist.order.delete('<?=$order['id']?>');
+                        }); event.stopPropagation(); return false;"
+                    class="btn btn-loading btn-danger order-button">
+                    Удалить заказ
+                </button>
+            <? else: ?>
+                <button type="button" onclick="event.stopPropagation(); return false;" class="btn btn-info order-button">
+                    Заказ выполнен
+                </button>
+            <? endif ?>
+        </div>
+    </div>
+</div>

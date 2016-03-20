@@ -38,62 +38,62 @@ class DbDriverBase extends DbDriverConnection
 
     public function fetchAssoc($select)
     {
-        return self::_fetchAbstract(__FUNCTION__, $select);
+        return $this->_fetchAbstract(__FUNCTION__, $select);
     }
 
     public function fetchAll($select)
     {
-        return self::_fetchAbstract(__FUNCTION__, $select);
+        return $this->_fetchAbstract(__FUNCTION__, $select);
     }
 
     public function fetchRow($select)
     {
-        return self::_fetchAbstract(__FUNCTION__, $select);
+        return $this->_fetchAbstract(__FUNCTION__, $select);
     }
 
     public function fetchCol($select)
     {
-        return self::_fetchAbstract(__FUNCTION__, $select);
+        return $this->_fetchAbstract(__FUNCTION__, $select);
     }
 
     public function fetchOne($select)
     {
-        return self::_fetchAbstract(__FUNCTION__, $select);
+        return $this->_fetchAbstract(__FUNCTION__, $select);
     }
 
     public function writequery($table, $query)
     {
-        return self::queryWrite($query, '', $table);
+        return $this->queryWrite($query, '', $table);
     }
 
     public function insert($table, array $bind)
     {
-        $query = self::sqlInsert($table, $bind, '');
-        return parent::insert($query, '', $table);
+        $query = $this->sqlInsert($table, $bind, '');
+        return $this->queryWrite($query, $table);
     }
 
     public function insertMultiple($table, array $bindArray)
     {
-        $query = self::sqlInsertMultiple($table, $bindArray);
-        return parent::insert($query, '', $table);
+        $query = $this->sqlInsertMultiple($table, $bindArray);
+        return $this->queryWrite($query, $table);
     }
 
     public function insertd($table, array $bind, $duplicate = '')
     {
-        $query = self::sqlInsert($table, $bind, $duplicate);
-        return parent::insert($query, '', $table);
+        $query = $this->sqlInsert($table, $bind, $duplicate);
+        return $this->queryWrite($query, $table);
     }
 
     public function update($table, array $bind, $where = '')
     {
-        $query = self::sqlUpdate($table, $bind, $where);
-        return self::queryWrite($query, '', $table);
+        $query = $this->sqlUpdate($table, $bind, $where);
+        return $this->queryWrite($query, '', $table);
     }
 
     public function delete($table, $where = '')
     {
-        $query = self::sqlDelete($table, $where);
-        return self::queryWrite($query, '', $table);
+        $query = $this->sqlDelete($table, $where);
+        return $this->queryWrite($query, '', $table);
     }
 
     private function _fetchAbstract($function, $select)

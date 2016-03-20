@@ -2,8 +2,8 @@
 
 class UserController extends BaseController
 {
-	const ORDERS_PER_PAGE = 5;
-    const PAYMENTS_PER_PAGE = 10;
+	const ORDERS_PER_PAGE = 10;
+    const PAYMENTS_PER_PAGE = 15;
 
 	public function indexAction()
 	{
@@ -127,9 +127,9 @@ class UserController extends BaseController
 		$password = $this->p('user_password', '');
 
 		if ($this->p('submit')) {
-			$user = UserDao::i()->getByEmailPassword($email, $password);
+			$user = UserDao::i()->getByEmail($email);
 
-			if ($user) {
+			if ($user && password_verify($password, $user['password'])) {
 				BaseAuth::i()->authUser($user);
 				return $this->ajaxSuccess(['redirect' => '/orders/']);
 			} else {
@@ -158,14 +158,14 @@ class UserController extends BaseController
 
         $amount = (int)$this->p('amount');
 
-        if (UserDao::i()->lock($this->USER['id'])) {
+        if (LockDao::i()->lock(LockDao::USER, $this->USER['id'])) {
             if ($amount == 0) {
 				UserDao::i()->updateMoney($this->USER['id'], -$this->USER['cash'], -$this->USER['hold']);
             } else {
                 UserDao::i()->updateMoney($this->USER['id'], $amount);
             }
 
-            UserDao::i()->unlock($this->USER['id']);
+			LockDao::i()->unlock(LockDao::USER, $this->USER['id']);
         }
 
         $user = UserDao::i()->getById($this->USER['id']);

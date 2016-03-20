@@ -22,7 +22,7 @@ class BaseAuth extends \Phalcon\DI\Injectable
         $uid = BaseService::i()->getCookie('uid');
         $hw = BaseService::i()->getCookie('hw');
 
-        if (!$uid) {
+        if (!$uid || !$hw) {
             return false;
         }
 

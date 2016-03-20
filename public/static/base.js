@@ -9,15 +9,8 @@ var orderist = {
         }
     },
     core: {
-        get: function (url, params, callback) {
-            return $.get(url, params, callback);
-        },
         post: function (url, params, callback) {
             return $.post(url, params, callback);
-        },
-        notify: function (text) {
-            $('#modal-alert .modal-body').html(text);
-            orderist.popup.open($('#modal-alert').html());
         },
         formData: function(form) {
             var formArr = form.serializeArray();
@@ -61,7 +54,7 @@ var orderist = {
                         if (errorBlock.length) {
                             errorBlock.html('<div class="alert alert-dismissible alert-danger">' + errorText + '</div>');
                         } else {
-                            orderist.core.notify(errorText);
+                            orderist.popup.alert(errorText);
                         }
                     }
 
@@ -76,6 +69,19 @@ var orderist = {
         setLoading: function(el, loading) {
             el = $(el);
             var btn = $('.btn-loading', el);
+
+            $('span.loader', el).html('<div class="sk-circle"><div class="sk-circle1 sk-child"></div>'+
+                '<div class="sk-circle2 sk-child"></div>'+
+                '<div class="sk-circle3 sk-child"></div>'+
+                '<div class="sk-circle4 sk-child"></div>'+
+                '<div class="sk-circle5 sk-child"></div>'+
+                '<div class="sk-circle6 sk-child"></div>'+
+                '<div class="sk-circle7 sk-child"></div>'+
+                '<div class="sk-circle8 sk-child"></div>'+
+                '<div class="sk-circle9 sk-child"></div>'+
+                '<div class="sk-circle10 sk-child"></div>'+
+                '<div class="sk-circle11 sk-child"></div>'+
+                '<div class="sk-circle12 sk-child"></div></div>');
 
             if (loading) {
                 var wasLoading = el.hasClass('loading');
@@ -98,7 +104,6 @@ var orderist = {
         instance: null,
         onOpen: null,
         open: function(html) {
-            console.log(orderist.popup.instance);
             if (orderist.popup.instance) {
                 orderist.popup.onOpen = function () {
                     orderist.popup.doOpen(html);
@@ -107,6 +112,9 @@ var orderist = {
             } else {
                 orderist.popup.doOpen(html);
             }
+        },
+        close: function() {
+            orderist.popup.instance && orderist.popup.instance.modal('hide');
         },
         doOpen: function(html) {
             $('#modal-popup').html(html);
@@ -120,32 +128,87 @@ var orderist = {
                     onOpen();
                 }
             });
+        },
+        confirmCallback: null,
+        confirm: function(text, no, yes, callback) {
+            var block = $('<div id="modal-confirm"><div class="modal-dialog">'+
+                            '<div class="modal-content">'+
+                                '<div class="modal-header">'+
+                                    '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>'+
+                                    '<h4 class="modal-title">Подтверждение</h4>'+
+                                '</div>'+
+                                '<div class="modal-body">'+
+                                    '<h3 class="text"></h3>'+
+                                '</div>'+
+                                '<div class="modal-footer">'+
+                                    '<button type="button" class="btn btn-primary no" onclick="orderist.popup.close(); orderist.popup.confirmCallback(0);">Отмена</button>'+
+                                    '<button type="button" class="btn btn-danger yes" onclick="orderist.popup.close(); orderist.popup.confirmCallback(1);">ОК</button>'+
+                                '</div>'+
+                            '</div>'+
+                        '</div></div>');
+
+            $('.text', block).html(text);
+            $('.no', block).html(no);
+            $('.yes', block).html(yes);
+
+            orderist.popup.confirmCallback = callback;
+            orderist.popup.open(block.html());
+        },
+        alert: function(text) {
+            var block = $('<div id="modal-alert">'+
+                            '<div class="modal-dialog" id="order-create-popup">'+
+                                '<div class="modal-content">'+
+                                    '<div class="modal-header">'+
+                                        '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>'+
+                                        '<h4 class="modal-title">Произошла ошибка</h4>'+
+                                    '</div>'+
+                                    '<div class="modal-body"></div>'+
+                                    '<div class="modal-footer">'+
+                                        '<button type="button" class="btn btn-primary" data-dismiss="modal">Закрыть</button>'+
+                                    '</div>'+
+                                '</div>'+
+                            '</div>'+
+                        '</div>');
+            $('.modal-body', block).html(text);
+            orderist.popup.open(block.html());
         }
     },
     user: {
         login: function (submit) {
             submit = submit || false;
             var data = {};
+            var block = $('#user-login-popup');
 
             if (submit) {
-                var data = orderist.core.formData($('#user-login-popup form'));
+                var data = orderist.core.formData($('form', block));
                 data['submit'] = 1;
+
+                if (!orderist.core.setLoading(block, true)) {
+                    return false;
+                }
             }
 
             orderist.core.post('/user/login/', data, function (response) {
+                submit && orderist.core.setLoading(block, false);
                 orderist.core.processResponse(response);
             });
         },
         signup: function (submit) {
             submit = submit || false;
             var data = {};
+            var block = $('#user-signup-popup');
 
             if (submit) {
-                var data = orderist.core.formData($('#user-signup-popup form'));
+                var data = orderist.core.formData($('form', block));
                 data['submit'] = 1;
+
+                if (!orderist.core.setLoading(block, true)) {
+                    return false;
+                }
             }
 
             orderist.core.post('/user/signup/', data, function (response) {
+                submit && orderist.core.setLoading(block, false);
                 orderist.core.processResponse(response);
             });
         },
@@ -174,6 +237,7 @@ var orderist = {
         reloadPayments: function() {
             if ($('#user-payments-block').length) {
                 $('#user-payments-block tbody').html('');
+                orderist.user.isFinished = false;
                 orderist.user.loadPayments();
             }
         }
@@ -183,13 +247,29 @@ var orderist = {
             orderist.core.post('/order/createpopup/', {}, function (response) {
                 if (orderist.core.processResponse(response) && response.data.html) {
                     $('#order-create-popup input[name=order_price]').bind('keyup', function() {
-                        this.value = this.value.replace(/[^0-9\.]/g, '');
+                        var result = this.value.replace(/[^0-9\.]/g, '')
+                        if (result != this.value) {
+                            this.value = result;
+                        }
+                        if (this.value) {
+                            var result = Number(this.value.toString().match(/^\d+(?:\.\d{0,2})?/));
+                            if (this.value != result) {
+                                this.value = result;
+                            }
+                        }
                     });
                     $('#order-create-popup input[name=order_price]').bind('input', function() {
                         var price = $(this).val().replace(/[^0-9\.]/g, '');
                         var popup = $('#order-create-popup');
                         var commission = $('.order-commission', popup).data('value');
-                        $('.executer-price', popup).html((price - price * commission).toFixed(2));
+
+                        price = price * 100;
+                        var commissionPrice = Math.ceil(price * commission);
+                        var executerPrice = (price - commissionPrice) / 100;
+                        var realCommission = price == 0 ? (commission * 100) : Math.ceil(commissionPrice / price * 100);
+
+                        $('.order-commission', popup).html(realCommission + '%');
+                        $('.executer-price', popup).html(parseFloat(executerPrice.toFixed(2)));
                     });
                 }
             });
@@ -210,20 +290,46 @@ var orderist = {
                         footer.html($('.modal-footer.done', popup).html());
                         footer.fadeIn('fast');
                     });
+                    orderist.order.reload();
                 }
             });
         },
         execute: function (orderId) {
+            var orderBlock = $('#order-'+orderId);
+            if (!orderist.core.setLoading(orderBlock, true)) {
+                return false;
+            }
+
             orderist.core.post('/order/execute/', {order_id: orderId}, function (response) {
+                orderist.core.setLoading(orderBlock, false);
+
+                var disableBtn = function(block) {
+                    block.addClass('disabled');
+                    $('button', block).html('Заказ выполнен');
+                    $('button', block).removeAttr('onclick');
+                }
+
                 if (response.data && response.data.order == 'disabled') {
-                    $('#order-'+orderId).addClass('disabled');
-                    $('#order-'+orderId+' button').html('Заказ выполнен');
+                    disableBtn(orderBlock);
                 }
 
                 if (orderist.core.processResponse(response)) {
-                    $('#order-'+orderId).addClass('disabled');
-                    $('#order-'+orderId+' .order-get-text').html('Вы получили:');
-                    $('#order-'+orderId+' button').html('Заказ выполнен');
+                    disableBtn(orderBlock);
+                    $('.order-get-text', orderBlock).html('Вы получили:');
+                }
+            });
+        },
+        delete: function (orderId) {
+            var orderBlock = $('#order-'+orderId);
+            if (!orderist.core.setLoading(orderBlock, true)) {
+                return false;
+            }
+
+            orderist.core.post('/order/delete/', {order_id: orderId}, function (response) {
+                orderist.core.setLoading(orderBlock, false);
+
+                if (orderist.core.processResponse(response)) {
+                    orderBlock.fadeOut('fast');
                 }
             });
         },
@@ -248,6 +354,13 @@ var orderist = {
                 orderist.order.isLoading = false;
                 $('#orders-block').append(response.data.html);
             });
+        },
+        reload: function() {
+            if ($('#orders-block').length) {
+                $('#orders-block').html('');
+                orderist.order.isFinished = 0;
+                orderist.order.loadMore();
+            }
         }
     }
 };

@@ -2,7 +2,7 @@
 
 class IndexController extends BaseController
 {
-	const ORDERS_PER_PAGE = 5;
+	const ORDERS_PER_PAGE = 10;
 
 	public function indexAction()
 	{

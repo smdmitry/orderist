@@ -37,8 +37,9 @@ class OrderController extends BaseController
 
         $cash = $user['cash'] - $user['hold'];
         if ($price > $cash) {
+            $need = ($price - $cash) / 100;
             return $this->ajaxError([
-                'error' => 'У вас недостаточно средств на счету, попробуйте снизить стоимость заказа!',
+                'error' => "Вам на хватает {$need} руб., для создания заказа, попробуйте снизить стоимость!",
             ]);
         }
 
@@ -57,22 +58,24 @@ class OrderController extends BaseController
             ]);
         }
 
-        if (UserDao::i()->lock($user['id'])) {
+        if (LockDao::i()->lock(LockDao::USER, $user['id'])) {
             $user = UserDao::i()->getById($user['id']);
             $cash = $user['cash'] - $user['hold'];
             if ($price > $cash) {
-                UserDao::i()->unlock($user['id']);
+                LockDao::i()->unlock(LockDao::USER, $user['id']);
+                $need = ($price - $cash) / 100;
                 return $this->ajaxError([
-                    'error' => 'Ошибка, недостаточно денег на счету',
+                    'error' => "Вам на хватает {$need} руб., для создания заказа, попробуйте снизить стоимость!",
                 ]);
             }
 
-            $orderId = OrderDao::i()->addOrder($user['id'], $title, $description, $price);
+            $commission = ceil($price * OrderDao::COMMISSION);
+            $orderId = OrderDao::i()->addOrder($user['id'], $title, $description, $price, $commission);
             if ($orderId) {
                 UserDao::i()->updateMoney($user['id'], 0, $price, $orderId);
             }
 
-            UserDao::i()->unlock($user['id']);
+            LockDao::i()->unlock(LockDao::USER, $user['id']);
         }
 
         $user = UserDao::i()->getById($user['id']);
@@ -113,8 +116,8 @@ class OrderController extends BaseController
         }
 
         $res = false;
-        if (UserDao::i()->lock($order['user_id'])) {
-            if (UserDao::i()->lock($this->USER['id'])) {
+        if (LockDao::i()->lock(LockDao::USER, $order['user_id'])) {
+            if (LockDao::i()->lock(LockDao::USER, $this->USER['id'])) {
                 $res = OrderDao::i()->execute($orderId, $this->USER['id']);
 
                 if ($res) {
@@ -123,9 +126,56 @@ class OrderController extends BaseController
                     UserDao::i()->updateMoney($this->USER['id'], $price, 0, $orderId);
                 }
 
-                UserDao::i()->unlock($this->USER['id']);
+                LockDao::i()->unlock(LockDao::USER, $this->USER['id']);
             }
-            UserDao::i()->unlock($order['user_id']);
+            LockDao::i()->unlock(LockDao::USER, $order['user_id']);
+        }
+
+        $user = UserDao::i()->getById($this->USER['id']);
+        $this->updateUserData($user);
+
+        return $res ? $this->ajaxSuccess() : $this->ajaxError([
+            'error' => 'Произошла ошибка, попробуйте ещё раз.',
+        ]);
+    }
+
+    public function deleteAction()
+    {
+        if (!$this->USER) {
+            return $this->ajaxError(['error' => 'auth']);
+        }
+
+        $orderId = (int)$this->p('order_id');
+        $order = OrderDao::i()->getById($orderId);
+
+        if (empty($order)) {
+            return $this->ajaxError([
+                'error' => 'Ошибка, такого заказа не существует!',
+            ]);
+        }
+
+        if ($order['user_id'] != $this->USER['id']) {
+            return $this->ajaxError([
+                'error' => 'Мы обнаружили, что вы пытаетесь удалить чужой заказ. Не стоит этого делать!',
+            ]);
+        }
+
+        if ($order['state'] != OrderDao::STATE_NEW) {
+            return $this->ajaxError([
+                'order' => 'disabled',
+                'error' => 'Извините, но нельзя удалить уже выполненный заказ!',
+            ]);
+        }
+
+        $res = false;
+        if (LockDao::i()->lock(LockDao::USER, $this->USER['id'])) {
+            $res = OrderDao::i()->delete($orderId, $this->USER['id']);
+
+            if ($res) {
+                UserDao::i()->updateMoney($this->USER['id'], 0, -$order['price'], $orderId);
+            }
+
+            LockDao::i()->unlock(LockDao::USER, $this->USER['id']);
         }
 
         $user = UserDao::i()->getById($this->USER['id']);

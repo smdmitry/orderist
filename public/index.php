@@ -75,7 +75,7 @@ class Application extends BaseApplication
 
 		$di->set('db', function() use ($settings) {
 			return new DbDriverBase($settings['database']);
-		});
+		}, true);
 	}
 
 	public function main()
@@ -86,8 +86,12 @@ class Application extends BaseApplication
 	}
 }
 
+$GLOBALS['ts'] = microtime(true);
+
 try {
 	require '../apps/config/base.php';
+	require '../apps/lib/FireLogger.php';
+	fcritical("Page load: " . $_SERVER['REQUEST_URI']);
 
 	$di = new DI();
 	$di->set('settings', function() use ($settings) {
@@ -96,6 +100,8 @@ try {
 
 	$application = new Application($di);
 	$application->main();
+
+	fcritical("Page ". $_SERVER['REQUEST_URI'] ." generation time: " . (microtime(true) - $GLOBALS['ts']));
 
 	if (BackgroundWorker::i()->hasJob()) {
 		BackgroundWorker::i()->doJob();
