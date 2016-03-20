@@ -69,7 +69,7 @@ class OrderController extends BaseController
 
             $orderId = OrderDao::i()->addOrder($user['id'], $title, $description, $price);
             if ($orderId) {
-                UserDao::i()->addMoney($user['id'], 0, $price, $orderId);
+                UserDao::i()->updateMoney($user['id'], 0, $price, $orderId);
             }
 
             UserDao::i()->unlock($user['id']);
@@ -119,8 +119,8 @@ class OrderController extends BaseController
 
                 if ($res) {
                     $price = $order['price'] - $order['commission'];
-                    UserDao::i()->addMoney($order['user_id'], -$order['price'], -$order['price'], $orderId);
-                    UserDao::i()->addMoney($this->USER['id'], $price, 0, $orderId);
+                    UserDao::i()->updateMoney($order['user_id'], -$order['price'], -$order['price'], $orderId);
+                    UserDao::i()->updateMoney($this->USER['id'], $price, 0, $orderId);
                 }
 
                 UserDao::i()->unlock($this->USER['id']);

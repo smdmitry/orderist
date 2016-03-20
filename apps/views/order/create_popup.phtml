@@ -5,7 +5,7 @@
             <h4 class="modal-title">Разместить новый заказ</h4>
         </div>
         <div class="modal-body">
-            <form class="form-horizontal">
+            <form class="form-horizontal" method="post" action="/order/create/" onsubmit="orderist.order.create(); return false;">
                 <fieldset>
                     <div class="errors-block"></div>
                     <div class="form-group">
@@ -34,16 +34,21 @@
                             </div>
                         </div>
                     </div>
+                    <input type="submit" style="display: none;" />
                 </fieldset>
             </form>
         </div>
-        <div class="modal-footer">
+        <div class="modal-footer create">
+            <?=BaseTag::loader()?>
             <button type="button" class="btn btn-default" data-dismiss="modal">Отмена</button>
-            <button type="button" class="btn btn-primary btn-success" onclick="orderist.order.create();">Разместить заказ</button>
+            <button type="button" class="btn btn-loading btn-primary btn-success" onclick="$('#order-create-popup form').submit();">Разместить заказ</button>
         </div>
-        <div class="modal-footer ok" style="display: none;">
-            <a href="/user/orders/">Перейти к списку заказов</a>
-            <button type="button" class="btn btn-primary btn-success" onclick="orderist.order.create();">Новый заказ</button>
+        <div class="modal-footer done" style="display: none;">
+            <div class="alert alert-success">
+                Ваш заказ успешно размещен и скоро появится на главной странице.
+            </div>
+            <a href="/user/orders/">К моим заказам</a>
+            <button type="button" class="btn btn-primary btn-success" onclick="orderist.order.createPopup();">Новый заказ</button>
             <button type="button" class="btn btn-primary" data-dismiss="modal">Закрыть</button>
         </div>
     </div>

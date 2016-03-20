@@ -72,16 +72,54 @@ var orderist = {
             }
 
             return response.res;
-        }
+        },
+        setLoading: function(el, loading) {
+            el = $(el);
+            var btn = $('.btn-loading', el);
+
+            if (loading) {
+                var wasLoading = el.hasClass('loading');
+                if (wasLoading) return false;
+
+                btn.attr('disabled', 'disabled');
+                el.addClass('loading');
+            } else {
+                var wasLoading = el.hasClass('loading');
+                if (!wasLoading) return false;
+
+                btn.removeAttr('disabled');
+                el.removeClass('loading');
+            }
+
+            return true;
+        },
     },
     popup: {
         instance: null,
+        onOpen: null,
         open: function(html) {
+            console.log(orderist.popup.instance);
             if (orderist.popup.instance) {
+                orderist.popup.onOpen = function () {
+                    orderist.popup.doOpen(html);
+                };
                 orderist.popup.instance.modal('hide');
+            } else {
+                orderist.popup.doOpen(html);
             }
+        },
+        doOpen: function(html) {
             $('#modal-popup').html(html);
-            orderist.popup.instance = $('#modal-popup').modal('toggle');
+            orderist.popup.instance = $('#modal-popup').modal('show');
+            orderist.popup.instance.on('hidden.bs.modal', function (e) {
+                orderist.popup.instance.off('hidden.bs.modal');
+                orderist.popup.instance = null;
+                if (orderist.popup.onOpen) {
+                    var onOpen = orderist.popup.onOpen;
+                    orderist.popup.onOpen = null;
+                    onOpen();
+                }
+            });
         }
     },
     user: {
@@ -129,6 +167,7 @@ var orderist = {
             orderist.core.post(orderist.user.loadMoreUrl, {last_payment_id: lastPaymentId}, function (response) {
                 if (!response.has_next) orderist.user.isFinished = false;
                 orderist.user.isLoading = false;
+                response.data.html && $('#user-payments-block').show();
                 $('#user-payments-block tbody').append(response.data.html);
             });
         },
@@ -157,11 +196,20 @@ var orderist = {
         },
         create: function() {
             var popup = $('#order-create-popup');
+            var footer = $('.modal-footer.create', popup);
+
+            if (!orderist.core.setLoading(popup, true)) {
+                return false;
+            }
+
             orderist.core.post('/order/create/', orderist.core.formData($('form', popup)), function (response) {
+                orderist.core.setLoading(popup, false);
                 if (orderist.core.processResponse(response)) {
-                    $('input', popup).attr('disabled', 'disabled');
-                    $('.modal-footer', popup).hide();
-                    $('.modal-footer.ok', popup).show();
+                    $('input,textarea', popup).attr('disabled', 'disabled');
+                    footer.fadeOut('fast', function() {
+                        footer.html($('.modal-footer.done', popup).html());
+                        footer.fadeIn('fast');
+                    });
                 }
             });
         },

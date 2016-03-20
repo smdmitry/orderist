@@ -1,3 +1,7 @@
+@import url("spinner.css");
+.sk-circle { display: none; }
+.loading .sk-circle { display: inline-block; }
+
 body {
     padding-top: 75px;
 }
@@ -76,6 +80,9 @@ body {
     background-color: #95a5a6;
 }
 
+#order-create-popup .modal-footer a {
+    margin-right: 10px;
+}
 #user-payments-block .positive td {
     color: rgba(24, 188, 156, 1);
 }

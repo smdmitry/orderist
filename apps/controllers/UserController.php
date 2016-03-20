@@ -123,9 +123,7 @@ class UserController extends BaseController
             return $this->ajaxSuccess(['redirect' => '/orders/']);
         }
 
-		$filter = new \Phalcon\Filter();
-
-		$email = $filter->sanitize($this->p('user_email', ''), 'email');
+		$email = $this->p('user_email', '');
 		$password = $this->p('user_password', '');
 
 		if ($this->p('submit')) {
@@ -154,15 +152,17 @@ class UserController extends BaseController
 
     public function addcashAction()
     {
+		if (!$this->USER) {
+			return $this->ajaxSuccess(['redirect' => '/orders/']);
+		}
+
         $amount = (int)$this->p('amount');
 
         if (UserDao::i()->lock($this->USER['id'])) {
             if ($amount == 0) {
-                if ($this->USER['cash'] != 0) {
-                    UserDao::i()->addMoney($this->USER['id'], -$this->USER['cash'], -$this->USER['hold']);
-                }
+				UserDao::i()->updateMoney($this->USER['id'], -$this->USER['cash'], -$this->USER['hold']);
             } else {
-                UserDao::i()->addMoney($this->USER['id'], $amount);
+                UserDao::i()->updateMoney($this->USER['id'], $amount);
             }
 
             UserDao::i()->unlock($this->USER['id']);

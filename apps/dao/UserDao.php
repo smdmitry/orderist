@@ -98,18 +98,22 @@ class UserDao extends BaseDao
         return $res;
     }
 
-    public function addMoney($userId, $amount, $hold = 0, $orderId = 0)
+    public function updateMoney($userId, $amount, $hold = 0, $orderId = 0)
     {
-        $res = $this->db->insert(self::TABLE_PAYMENTS, [
-            'user_id' => $userId,
-            'amount' => $amount,
-            'order_id' => $orderId,
-            'inserted' => time(),
-        ]);
-        $paymentId = $res ? $this->db->lastInsertId() : 0;
+        if ($amount != 0) {
+            $res = $this->db->insert(self::TABLE_PAYMENTS, [
+                'user_id' => $userId,
+                'amount' => $amount,
+                'order_id' => $orderId,
+                'inserted' => time(),
+            ]);
+            $paymentId = $res ? $this->db->lastInsertId() : 0;
 
-        if (!$paymentId) {
-            return false;
+            if (!$paymentId) {
+                return false;
+            }
+        } else {
+            $paymentId = true;
         }
 
         $res = $this->db->update(self::TABLE_USER, [
