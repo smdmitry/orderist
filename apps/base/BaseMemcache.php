@@ -5,7 +5,7 @@ class BaseMemcache extends \Phalcon\DI\Injectable
     /**
      * @var Memcache
      */
-    protected $mc;
+    public $mc;
 
     private $CACHED_TTL = 1;
     private $cacheData   = []; // статический кеш на время фомирования страницы
@@ -16,33 +16,35 @@ class BaseMemcache extends \Phalcon\DI\Injectable
     public static function i() { static $instance; if (empty($instance)) $instance = new static(); return $instance; }
     private function __construct()
     {
-        finfo("Memcache connect");
+        if (DEBUG) finfo("Memcache connect");
         $this->mc = new Memcache();
         $this->mc->addserver('127.0.0.1', 11211);
     }
 
     private function _get($key)
     {
-        $log = is_array($key) ? ('mget ' . implode(',', $key)) : ('get '.$key);
-        finfo("Memcache: {$log}");
+        if (DEBUG) {
+            $log = is_array($key) ? ('mget ' . implode(',', $key)) : ('get ' . $key);
+            finfo("Memcache: {$log}");
+        }
         return $this->mc->get($key);
     }
 
     private function _set($key, $value, $ttl)
     {
-        finfo("Memcache: set {$key}");
+        if (DEBUG) finfo("Memcache: set {$key}");
         return $this->mc->set($key, $value, 0, $ttl);
     }
 
     public function add($key, $value, $ttl)
     {
-        finfo("Memcache: add {$key}");
+        if (DEBUG) finfo("Memcache: add {$key}");
         return $this->mc->add($key, $value, 0, $ttl);
     }
 
     private function _delete($key)
     {
-        finfo("Memcache: delete {$key}");
+        if (DEBUG) finfo("Memcache: delete {$key}");
         return $this->mc->delete($key);
     }
 

@@ -302,7 +302,7 @@ if (!defined('FIRELOGGER_NO_VERSION_CHECK')) {
     } else {
         FireLogger::$clientVersion = $_SERVER['HTTP_X_FIRELOGGER'];
         if (FireLogger::$clientVersion!=FireLogger::$recommendedClientVersion) {
-            error_log("FireLogger for PHP (v".FIRELOGGER_VERSION.") works best with FireLogger extension of version ".FireLogger::$recommendedClientVersion.". You are currently using extension v".FireLogger::$clientVersion.". Please visit the homepage and install matching versions => http://firelogger.binaryage.com/php");
+            //error_log("FireLogger for PHP (v".FIRELOGGER_VERSION.") works best with FireLogger extension of version ".FireLogger::$recommendedClientVersion.". You are currently using extension v".FireLogger::$clientVersion.". Please visit the homepage and install matching versions => http://firelogger.binaryage.com/php");
         }
     }
 }

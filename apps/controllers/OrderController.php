@@ -28,6 +28,10 @@ class OrderController extends BaseController
             return $this->ajaxError(['error' => 'auth']);
         }
 
+        if (!$this->checkCSRF()) {
+            return $this->ajaxError(['type' => 'csrf']);
+        }
+
         $title = $this->p('order_title');
         $description = $this->p('order_description');
         $price = $this->p('order_price');
@@ -104,6 +108,10 @@ class OrderController extends BaseController
             return $this->ajaxError(['error' => 'auth']);
         }
 
+        if (!$this->checkCSRF()) {
+            return $this->ajaxError(['type' => 'csrf']);
+        }
+
         $orderId = (int)$this->p('order_id');
         $order = OrderDao::i()->getById($orderId);
 
@@ -130,7 +138,7 @@ class OrderController extends BaseController
         $res = false;
         if (LockDao::i()->lock(LockDao::USER, $order['user_id'])) {
             if (LockDao::i()->lock(LockDao::USER, $this->USER['id'])) {
-                $res = OrderDao::i()->execute($orderId, $this->USER['id']);
+                $res = OrderDao::i()->execute($order, $this->USER['id']);
 
                 if ($res) {
                     $price = $order['price'] - $order['commission'];
@@ -148,7 +156,9 @@ class OrderController extends BaseController
 
         if ($res) {
             BaseWS::i()->send($order['user_id'], ['type' => 'order', 'action' => 'executed', 'id' => $orderId]);
-            // TODO: global orders search
+            if (OrderDao::i()->needOrderSocketUpdate($order)) {
+                BaseWS::i()->send(0, ['type' => 'order', 'action' => 'executed', 'id' => $orderId]);
+            }
         }
 
         return $res ? $this->ajaxSuccess() : $this->ajaxError([
@@ -164,6 +174,10 @@ class OrderController extends BaseController
 
         if (!$this->USER) {
             return $this->ajaxError(['error' => 'auth']);
+        }
+
+        if (!$this->checkCSRF()) {
+            return $this->ajaxError(['type' => 'csrf']);
         }
 
         $orderId = (int)$this->p('order_id');
@@ -190,7 +204,7 @@ class OrderController extends BaseController
 
         $res = false;
         if (LockDao::i()->lock(LockDao::USER, $this->USER['id'])) {
-            $res = OrderDao::i()->delete($orderId, $this->USER['id']);
+            $res = OrderDao::i()->delete($order, $this->USER['id']);
 
             if ($res) {
                 UserDao::i()->updateMoney($this->USER['id'], 0, -$order['price'], $orderId);
@@ -204,7 +218,9 @@ class OrderController extends BaseController
 
         if ($res) {
             BaseWS::i()->send($order['user_id'], ['type' => 'order', 'action' => 'deleted', 'id' => $orderId]);
-            // TODO: global orders search
+            if (OrderDao::i()->needOrderSocketUpdate($order)) {
+                BaseWS::i()->send(0, ['type' => 'order', 'action' => 'deleted', 'id' => $orderId]);
+            }
         }
 
         return $res ? $this->ajaxSuccess() : $this->ajaxError([

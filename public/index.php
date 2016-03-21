@@ -7,7 +7,6 @@ use Phalcon\Mvc\Dispatcher;
 use Phalcon\Http\Response;
 use Phalcon\Http\Request;
 use Phalcon\Mvc\View;
-use Phalcon\Db\Adapter\Pdo\Mysql as Database;
 use Phalcon\Mvc\Application as BaseApplication;
 
 class Application extends BaseApplication
@@ -87,11 +86,10 @@ class Application extends BaseApplication
 }
 
 $GLOBALS['ts'] = microtime(true);
-
 try {
 	require '../apps/config/base.php';
-	require '../apps/lib/FireLogger.php';
-	fcritical("Page load: " . $_SERVER['REQUEST_URI']);
+	if (DEBUG) require '../apps/lib/FireLogger.php';
+	if (DEBUG) fcritical("Page load: " . $_SERVER['REQUEST_URI']);
 
 	$di = new DI();
 	$di->set('settings', function() use ($settings) {
@@ -101,7 +99,7 @@ try {
 	$application = new Application($di);
 	$application->main();
 
-	fcritical("Page ". $_SERVER['REQUEST_URI'] ." generation time: " . (microtime(true) - $GLOBALS['ts']));
+	if (DEBUG) fcritical("Page ". $_SERVER['REQUEST_URI'] ." generation time: " . (microtime(true) - $GLOBALS['ts']));
 
 	if (BackgroundWorker::i()->hasJob()) {
 		BackgroundWorker::i()->doJob();

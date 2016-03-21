@@ -3,7 +3,7 @@
 class UserController extends BaseController
 {
 	const ORDERS_PER_PAGE = 10;
-    const PAYMENTS_PER_PAGE = 15;
+    const PAYMENTS_PER_PAGE = 30;
 
 	public function indexAction()
 	{
@@ -93,13 +93,14 @@ class UserController extends BaseController
 
 		$name = $filter->sanitize($this->p('user_name', ''), 'string');
 		$email = $filter->sanitize($this->p('user_email', ''), 'email');
-		$password = $this->p('user_password', '');
+		$password = $this->p('user_password');
 
 		if ($this->p('name') || $this->p('email')) {
 			return $this->ajaxSuccess(['error' => 'Введите Ваше имя и Email']);
 		}
 
 		if ($this->p('submit')) {
+			$password = $password ? $password : substr(md5(uniqid()), 0, 12);
 			$res = UserDao::i()->addUser($name, $email, $password);
 
 			if (!$res || !empty($res['errors'])) {
@@ -183,6 +184,17 @@ class UserController extends BaseController
 
         return $this->ajaxSuccess();
     }
+
+	public function getcashAction()
+	{
+		if (!$this->USER) {
+			return $this->ajaxSuccess(['redirect' => '/orders/']);
+		}
+
+		$this->updateUserData($this->USER, false);
+
+		return $this->ajaxSuccess();
+	}
 
 	public function authAction()
 	{

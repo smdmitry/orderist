@@ -9,11 +9,10 @@
     <link rel="shortcut icon" href="<?=BaseTag::path('/favicon.ico')?>">
     <link rel="stylesheet" href="<?=BaseTag::path('/lib/bootstrap.min.css')?>" media="screen">
     <link rel="stylesheet" href="<?=BaseTag::path('/base.css')?>" media="screen">
-    <link rel="stylesheet" href="<?=BaseTag::path('/lib/spinner.css')?>" media="screen">
 
     <noscript><meta http-equiv="refresh" content="0; URL=https://vk.com/badbrowser.php"></noscript>
     <script src="<?=BaseTag::path('/lib/jquery-1.12.2.min.js')?>"></script>
-    <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+    <script src="<?=BaseTag::path('/lib/socket.io-1.4.5.js')?>"></script>
     <script src="<?=BaseTag::path('/lib/bootstrap.min.js')?>"></script>
     <script src="<?=BaseTag::path('/lib/bootstrap.fix.js')?>"></script>
     <script src="<?=BaseTag::path('/base.js')?>"></script>
@@ -78,6 +77,10 @@
 </div>
 
 <div id="modal-popup" class="modal fade" role="dialog"></div>
+
+<div style="display: none;">
+    <img src="<?=BaseTag::path('/loader.gif')?>" class="loader-img" />
+</div>
 
 <? if (!empty($requestParams['create'])): ?>
     <script>

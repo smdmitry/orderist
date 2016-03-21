@@ -6,15 +6,12 @@ var bodyParser = require('body-parser')
 var app = express();
 var server = http.createServer(app);
 var io = require('socket.io').listen(server);
-server.listen(8080);
 
+server.listen(8080);
 app.use(bodyParser.json());
 
-//io.set('log level', 1);
-io.set('authorization', function(data, callback) {
-    data.tmptest = 1;
-    callback(null, true);
-    return;
+io.use(function(socket, next) {
+    var data = socket.request;
     requestify.get('http://localhost/user/auth/', {
         dataType: 'json',
         headers: {
@@ -23,15 +20,15 @@ io.set('authorization', function(data, callback) {
             'X-Requested-With': 'XMLHttpRequest'
         }
     }).then(function(response) {
-        data.user_id = 0;
+        socket.handshake.user_id = 0;
         var body = response.getBody();
         if (body && body.res && body.data && body.data.user_id) {
-            data.user_id = body.data.user_id;
+            socket.handshake.user_id = body.data.user_id;
         }
-        callback(null, 'test');
+        next();
     }, function(err) {
-        data.user_id = 0;
-        callback(null, true);
+        socket.handshake.user_id = 0;
+        next();
     });
 });
 
@@ -41,25 +38,19 @@ app.get('/emit/:id/:token/:message/', function (req, res) {
     }
     delete req.params.token;
 
+    var json = JSON.parse(req.params.message);
     if (req.params.id == 0) {
-        io.emit('message', req.params.message);
+        io.emit('message', json);
     } else {
-        io.sockets.emit('message', req.params.message);
+        io.to('uid'+req.params.id).emit('message', json);
     }
 
     res.json('ok');
 });
 
 io.sockets.on('connection', function (client) {
-    //var userId = client.handshake.user_id;
-
-    /*client.on('message', function (message) {
-        try {
-            client.emit('message', message);
-            client.broadcast.emit('message', message);
-        } catch (e) {
-            console.log(e);
-            client.disconnect();
-        }
-    });*/
+    var userId = client.handshake.user_id;
+    if (userId) {
+        client.join('uid'+userId);
+    }
 });

@@ -2,11 +2,22 @@
 
 class UserDao extends BaseDao
 {
-    const TABLE_USER = 'order_users';
-    const TABLE_PAYMENTS = 'order_payments';
+    const TABLE_USER = 'users';
+    const TABLE_PAYMENTS = 'payments';
+    const TABLE_PAYMENTS_SHARDS = 4;
 
     const MC_KEY = 'user:';
     const MC_TIME = 86400; // 24 часа
+
+    const NEW_PAYMENTS_MCKEY = 'payments:';
+    const NEW_PAYMENTS_MCTIME = 86400;
+    const NEW_PAYMENTS_LIMIT = UserController::PAYMENTS_PER_PAGE;
+
+    private function getPaymentsTable($userId)
+    {
+        $shardId = $userId % self::TABLE_PAYMENTS_SHARDS;
+        return self::TABLE_PAYMENTS . '_' . $shardId;
+    }
 
     public function getById($id)
     {
@@ -36,7 +47,8 @@ class UserDao extends BaseDao
 
     public function getByEmail($email)
     {
-        $select = $this->db->select()->from(self::TABLE_USER)->where('email = ?', $email);
+        $email = mb_strtolower($email);
+        $select = $this->db->select()->from(self::TABLE_USER)->where('email_hash = ?', crc32($email))->where('email = ?', $email);
         return $this->db->fetchRow($select);
     }
 
@@ -52,8 +64,11 @@ class UserDao extends BaseDao
 
     private function _addUser($name, $email, $phash)
     {
+        $email = mb_strtolower($email);
+
         $res = $this->db->insert(self::TABLE_USER, [
             'name' => $name,
+            'email_hash' => crc32($email),
             'email' => $email,
             'password' => $phash,
             'inserted' => time(),
@@ -71,7 +86,6 @@ class UserDao extends BaseDao
 
     public function addUser($name, $email, $password)
     {
-        $password = $password ? $password : substr(md5(uniqid()), 0, 12);
         $password = password_hash($password, PASSWORD_BCRYPT);
 
         $errors = [];
@@ -122,7 +136,7 @@ class UserDao extends BaseDao
         $orderId = (int)$orderId;
 
         if ($amount != 0) {
-            $res = $this->db->insert(self::TABLE_PAYMENTS, [
+            $res = $this->db->insert($this->getPaymentsTable($userId), [
                 'user_id' => $userId,
                 'amount' => $amount,
                 'order_id' => $orderId,
@@ -133,6 +147,8 @@ class UserDao extends BaseDao
             if (!$paymentId) {
                 return false;
             }
+
+            $this->clearPaymentsCache($userId);
         } else {
             $paymentId = true;
         }
@@ -147,20 +163,35 @@ class UserDao extends BaseDao
 
         $res = $this->_update($userId, $update);
 
-        if ($res) {
-            BaseWS::i()->send($userId, ['type' => 'cash']);
-        }
-
         return $res ? $paymentId : false;
     }
 
     public function getUserPayments($userId, $limit, $lastPaymentId = 0)
     {
+        if ($lastPaymentId == 0 && $limit <= self::NEW_PAYMENTS_LIMIT) {
+            $data = BaseMemcache::i()->get(self::NEW_PAYMENTS_MCKEY . $userId);
+            if ($data === false) {
+                $data = $this->getUserPaymentsFromDb($userId, self::NEW_PAYMENTS_LIMIT);
+                BaseMemcache::i()->set(self::NEW_PAYMENTS_MCKEY . $userId, $data, self::NEW_PAYMENTS_MCTIME);
+            }
+            return array_slice($data, 0, $limit, true);
+        }
+
+        return $this->getUserPaymentsFromDb($userId, $limit, $lastPaymentId);
+    }
+
+    private function clearPaymentsCache($userId)
+    {
+        return BaseMemcache::i()->delete(self::NEW_PAYMENTS_MCKEY . $userId);
+    }
+
+    private function getUserPaymentsFromDb($userId, $limit, $lastPaymentId = 0)
+    {
         $userId = (int)$userId;
         $limit = (int)$limit;
         $lastPaymentId = (int)$lastPaymentId;
 
-        $select = $this->db->select()->from(self::TABLE_PAYMENTS)->order('id DESC')->limit($limit);
+        $select = $this->db->select()->from($this->getPaymentsTable($userId))->order('id DESC')->limit($limit);
         if ($userId) {
             $select->where('user_id = ?', $userId);
         }

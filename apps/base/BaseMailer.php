@@ -75,8 +75,8 @@ class BaseMailer extends \Phalcon\DI\Injectable
 
         $this->_mail->Subject = $config['subject'];
         $this->_mail->msgHTML($html);
-
         $mail = $this->_mail;
+
         BackgroundWorker::i()->addJob(function() use ($mail) {
             $mail->send();
         });

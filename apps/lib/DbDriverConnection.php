@@ -44,7 +44,7 @@ class DbDriverConnection
 
         $result = [];
         try {
-            if (substr($query, 0, 8) != 'EXPLAIN ') {
+            if (DEBUG && substr($query, 0, 8) != 'EXPLAIN ') {
                 flog("MySQL: {$query}");
                 $res = BaseDao::i()->db->fetchAll('EXPLAIN ' . $query);
                 fwarn("MySQL EXPLAIN: " . json_encode($res));
@@ -88,7 +88,7 @@ class DbDriverConnection
         do {
             $retry = false;
             try {
-                flog("MySQL: {$query}");
+                if (DEBUG) flog("MySQL: {$query}");
                 $sth = $this->_connection->prepare($query);
                 $sth->execute();
                 $count = $sth->rowCount();
@@ -153,7 +153,7 @@ class DbDriverConnection
         $connection->query('USE ' . $base . ';');
         $this->_connection = $connection;
 
-        flog("MySQL connect");
+        if (DEBUG) flog("MySQL connect");
 
         return true;
     }

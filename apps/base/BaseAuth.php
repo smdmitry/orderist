@@ -14,6 +14,8 @@ class BaseAuth extends \Phalcon\DI\Injectable
         BaseService::i()->setCookie('uid', $user['id'], $year);
         BaseService::i()->setCookie('hw', $this->getAuthHash($user['id'], $user['email'], $user['password']), $year);
 
+        BaseService::i()->setCSRFToken();
+
         return true;
     }
 

@@ -19,7 +19,7 @@ $expandable = mb_strlen($description) >= $descLenthLimit;
     <div class="order-desc">
         <? if ($expandable): ?>
             <?=mb_substr($description, 0, $descLenthLimit) . '<span class="more">...</span>'?>
-            <span class="collapsed" style="display: none;"><?=mb_substr($description, $descLenthLimit)?></span>
+            <span class="collapsed" style="display: none;"><?=mb_substr($description, $descLenthLimit)?></span><br><br>
             <a href="/order/<?=$order['id']?>/" class="hyp" onclick="orderist.order.expand('<?=$order['id']?>'); return false;">Показать полностью</a>
         <? else: ?>
             <?=$description?>

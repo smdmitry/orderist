@@ -2,7 +2,7 @@
 
 class OrderDao extends BaseDao
 {
-    const TABLE_ORDERS = 'order_orders';
+    const TABLE_ORDERS = 'orders';
 
     const STATE_NEW = 1;
     const STATE_EXECUTED = 2;
@@ -11,7 +11,11 @@ class OrderDao extends BaseDao
 
     const NEW_ORDERS_MCKEY = 'orders_new';
     const NEW_ORDERS_MCTIME = 60;
-    const NEW_ORDERS_LIMIT = 20;
+    const NEW_ORDERS_LIMIT = IndexController::ORDERS_PER_PAGE;
+
+    const USER_ORDERS_MCKEY = 'user_orders:';
+    const USER_ORDERS_MCTIME = 3600;
+    const USER_ORDERS_LIMIT = IndexController::ORDERS_PER_PAGE;
 
     public function getById($id)
     {
@@ -45,6 +49,7 @@ class OrderDao extends BaseDao
 
         foreach ($orders as $k => $record) {
             $orders[$k]['user'] = $users[$record['user_id']];
+            $orders[$k]['description'] = str_replace(["\r", "\n"], ['', '<br>'], $orders[$k]['description']);
         }
 
         return $orders;
@@ -54,7 +59,7 @@ class OrderDao extends BaseDao
     {
         if ($state == self::STATE_NEW && $lastOrderId == 0 && $limit <= self::NEW_ORDERS_LIMIT) {
             $data = BaseMemcache::i()->get(self::NEW_ORDERS_MCKEY);
-            if (empty($data)) {
+            if ($data === false) {
                 $data = $this->_getOrders($state, 0, self::NEW_ORDERS_LIMIT, $lastOrderId);
                 BaseMemcache::i()->set(self::NEW_ORDERS_MCKEY, $data, self::NEW_ORDERS_MCTIME);
             }
@@ -80,7 +85,22 @@ class OrderDao extends BaseDao
 
     public function getUserOrders($userId, $state, $limit = 10, $lastOrderId = 0)
     {
+        if ($lastOrderId == 0 && $limit <= self::USER_ORDERS_LIMIT) {
+            $data = BaseMemcache::i()->get(self::USER_ORDERS_MCKEY . $state . '_' . $userId);
+            if ($data === false) {
+                $data = $this->_getOrders($state, $userId, self::USER_ORDERS_LIMIT);
+                BaseMemcache::i()->set(self::USER_ORDERS_MCKEY . $state . '_' . $userId, $data, self::USER_ORDERS_MCTIME);
+            }
+            return array_slice($data, 0, $limit, true);
+        }
+
         return $this->_getOrders($state, $userId, $limit, $lastOrderId);
+    }
+
+    private function clearUserOrdersCache($userId, $state)
+    {
+        BaseMemcache::i()->delete(self::USER_ORDERS_MCKEY . '0_' . $userId);
+        return BaseMemcache::i()->delete(self::USER_ORDERS_MCKEY . $state . '_' . $userId);
     }
 
     protected function _getOrders($state, $userId = 0, $limit = 10, $lastOrderId = 0)
@@ -116,13 +136,14 @@ class OrderDao extends BaseDao
         ]);
         if ($res) {
             $this->clearNewOrdersCache();
+            $this->clearUserOrdersCache($userId, self::STATE_NEW);
         }
         return $res ? $this->db->lastInsertId() : false;
     }
 
-    public function execute($orderId, $userId)
+    public function execute($order, $userId)
     {
-        $orderId = (int)$orderId;
+        $orderId = (int)$order['id'];
         $state = self::STATE_NEW;
 
         $res = $this->db->update(self::TABLE_ORDERS, [
@@ -133,22 +154,35 @@ class OrderDao extends BaseDao
 
         if ($res) {
             $this->clearNewOrdersCache($orderId);
+            $this->clearUserOrdersCache($order['user_id'], $state);
         }
 
         return $res;
     }
 
-    public function delete($orderId)
+    public function delete($order)
     {
-        $orderId = (int)$orderId;
+        $orderId = (int)$order['id'];
         $state = self::STATE_NEW;
 
         $res = $this->db->delete(self::TABLE_ORDERS, $this->db->qq("id = ? AND state = ?", [$orderId, $state]));
 
         if ($res) {
             $this->clearNewOrdersCache($orderId);
+            $this->clearUserOrdersCache($order['user_id'], $state);
         }
 
         return $res;
+    }
+
+    public function needOrderSocketUpdate($order)
+    {
+        $minOrderId = BaseMemcache::i()->get('order_new_min');
+        if ($minOrderId === false) {
+            $select = $this->db->select()->from(self::TABLE_ORDERS, 'MIN(id) as id')->where('state = ?', self::STATE_NEW)->order('id DESC')->limit(1000);
+            $minOrderId = (int)$this->db->fetchOne($select);
+            BaseMemcache::i()->set('order_new_min', $minOrderId, 5*60);
+        }
+        return $order['id'] >= $minOrderId;
     }
 }

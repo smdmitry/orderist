@@ -25,9 +25,11 @@ $settings = [
             PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES 'UTF8'",
             PDO::ATTR_CASE => PDO::CASE_LOWER,
         ],
-    ]
+    ],
+    'debug' => !empty($_COOKIE['debug']) ? true : false,
 ];
 
 if (file_exists('../apps/config/override.php')) {
     include 'override.php';
 }
+@define('DEBUG', $settings['debug']);

@@ -24,6 +24,16 @@ class BaseController extends Controller
         $this->view->navTab = 0;
         $this->view->staticDomain = \Phalcon\DI::getDefault()->getConfig()['static'];
         $this->view->requestParams = $this->p('*');
+
+        if (!array_key_exists('debug', $_COOKIE)) {
+            BaseService::i()->setCookie('debug', 1, 365 * 24 * 60 * 60);
+        }
+    }
+
+    protected function checkCSRF()
+    {
+        $token = $this->p('simpletoken', (isset($_SERVER['HTTP_X_SIMPLE_TOKEN']) ? $_SERVER['HTTP_X_SIMPLE_TOKEN'] : false));
+        return BaseService::i()->checkCSRFToken($token);
     }
 
     protected function ajaxSuccess($data = null)
@@ -37,6 +47,8 @@ class BaseController extends Controller
         if (!empty($this->baseData)) {
             $result['base'] = $this->baseData;
         }
+
+        $this->debugSleep($data);
 
         header('Content-Type: application/json');
 
@@ -55,6 +67,8 @@ class BaseController extends Controller
             'res' => 0,
             'data' => $data,
         );
+
+        $this->debugSleep($data);
 
         header('Content-Type: application/json');
 
@@ -101,19 +115,33 @@ class BaseController extends Controller
         return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
     }
 
-    public function updateUserData($user = null)
+    public function updateUserData($user = null, $event = true)
     {
         $user = $user ? $user : $this->USER;
         if (!empty($user)) {
+            $cash = UserDao::i()->getField($user, 'cash');
+            $hold = UserDao::i()->getField($user, 'hold');
+
             $this->updateBaseData([
-                'cash' => UserDao::i()->getField($user, 'cash'),
-                'hold' => UserDao::i()->getField($user, 'hold'),
+                'cash' => $cash,
+                'hold' => $hold,
             ]);
+
+            if ($event) {
+                BaseWS::i()->send($user['id'], ['type' => 'cash', 'cash' => $cash, 'hold' => $hold]);
+            }
         }
     }
 
     private function updateBaseData($data)
     {
         $this->baseData = array_merge($this->baseData, $data);
+    }
+
+    private function debugSleep($data)
+    {
+        if (DEBUG && $this->isAjax() && empty($data['html'])) {
+            usleep(rand() % 2 ? rand(1, 1000) : rand(1000000, 3000000));
+        }
     }
 }

@@ -10,7 +10,26 @@ var orderist = {
     },
     core: {
         post: function (url, params, callback) {
-            return $.post(url, params, callback);
+            return $.ajax({
+                type: 'POST',
+                url: url,
+                data: params,
+                success: callback,
+                beforeSend: function (xhr, settings) {
+                    function sameOrigin(url) {
+                        var host = document.location.host;
+                        var protocol = document.location.protocol;
+                        var sr_origin = '//' + host;
+                        var origin = protocol + sr_origin;
+                        return (url == origin || url.slice(0, origin.length + 1) == origin + '/') ||
+                            (url == sr_origin || url.slice(0, sr_origin.length + 1) == sr_origin + '/') ||
+                            !(/^(\/\/|http:|https:).*/.test(url));
+                    }
+                    if (sameOrigin(settings.url)) {
+                        xhr.setRequestHeader('X-Simple-Token', $.cookie('simpletoken'));
+                    }
+                }
+            });
         },
         formData: function(form) {
             var formArr = form.serializeArray();
@@ -70,18 +89,7 @@ var orderist = {
             el = $(el);
             var btn = $('.btn-loading', el);
 
-            $('span.loader', el).html('<div class="sk-circle"><div class="sk-circle1 sk-child"></div>'+
-                '<div class="sk-circle2 sk-child"></div>'+
-                '<div class="sk-circle3 sk-child"></div>'+
-                '<div class="sk-circle4 sk-child"></div>'+
-                '<div class="sk-circle5 sk-child"></div>'+
-                '<div class="sk-circle6 sk-child"></div>'+
-                '<div class="sk-circle7 sk-child"></div>'+
-                '<div class="sk-circle8 sk-child"></div>'+
-                '<div class="sk-circle9 sk-child"></div>'+
-                '<div class="sk-circle10 sk-child"></div>'+
-                '<div class="sk-circle11 sk-child"></div>'+
-                '<div class="sk-circle12 sk-child"></div></div>');
+            $('span.loader', el).html($('.loader-img:first').clone());
 
             if (loading) {
                 var wasLoading = el.hasClass('loading');
@@ -218,17 +226,25 @@ var orderist = {
                 orderist.user.reloadPayments();
             });
         },
+        reloadCash: function() {
+            orderist.core.post('/user/getcash/', {}, function (response) {
+                orderist.core.processResponse(response);
+            });
+        },
         isLoading: false,
         isFinished: false,
         loadMoreUrl: '/user/getpaymentspage/',
-        loadPayments: function() {
+        loadPayments: function(reload) {
+            reload = reload || false;
+            if (reload) orderist.user.isFinished = false;
             if (orderist.user.isLoading || orderist.user.isFinished) return;
 
             orderist.user.isLoading = true;
 
-            var lastPaymentId = $('.user-payment-block:last').data('id');
+            var lastPaymentId = reload ? 0 : $('.user-payment-block:last').data('id');
             orderist.core.post(orderist.user.loadMoreUrl, {last_payment_id: lastPaymentId}, function (response) {
-                if (!response.has_next) orderist.user.isFinished = false;
+                if (reload) $('#user-payments-block tbody').html('');
+                if (!response.data.has_next) orderist.user.isFinished = true;
                 orderist.user.isLoading = false;
                 response.data.html && $('#user-payments-block').show();
                 $('#user-payments-block tbody').append(response.data.html);
@@ -236,9 +252,7 @@ var orderist = {
         },
         reloadPayments: function() {
             if ($('#user-payments-block').length) {
-                $('#user-payments-block tbody').html('');
-                orderist.user.isFinished = false;
-                orderist.user.loadPayments();
+                orderist.user.loadPayments(true);
             }
         }
     },
@@ -343,23 +357,23 @@ var orderist = {
         isLoading: false,
         isFinished: false,
         loadMoreUrl: '/index/getpage/',
-        loadMore: function() {
+        loadMore: function(reload) {
+            if (reload) orderist.order.isFinished = false;
             if (orderist.order.isLoading || orderist.order.isFinished) return;
 
             orderist.order.isLoading = true;
 
-            var lastOrderId = $('.order-block:last').data('id');
+            var lastOrderId = reload ? 0 : $('.order-block:last').data('id');
             orderist.core.post(orderist.order.loadMoreUrl, {last_order_id: lastOrderId}, function (response) {
-                if (!response.has_next) orderist.order.isFinished = false;
+                if (reload) $('#orders-block').html('');
+                if (!response.data.has_next) orderist.order.isFinished = true;
                 orderist.order.isLoading = false;
                 $('#orders-block').append(response.data.html);
             });
         },
         reload: function() {
             if ($('#orders-block').length) {
-                $('#orders-block').html('');
-                orderist.order.isFinished = 0;
-                orderist.order.loadMore();
+                orderist.order.loadMore(true);
             }
         }
     }
@@ -368,9 +382,10 @@ var orderist = {
 $(document).ready(function () {
     var socket = io.connect('http://orderist.smdmitry.com:8080');
     socket.on('message', function (data) {
-        console.log('socket', data);
+        console.log('socket data', data);
+
         if (data.type == 'cash') {
-            //orderist.user.updateCash();
+            orderist.user.reloadCash();
         } else if (data.type == 'order') {
             if (data.action == 'executed') {
                 var block = $('#order-'+data.id);

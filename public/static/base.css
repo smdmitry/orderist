@@ -97,3 +97,6 @@ body {
 .navbar-header { height: 50px; }
 .navbar-header a { padding-top: 15px; }
 .navbar-header .navbar-toggle { margin-top: 8px; }
+
+.loader-img { margin: 0 10px 0 0; display: none; }
+.loading .loader-img { display: inline-block; }
