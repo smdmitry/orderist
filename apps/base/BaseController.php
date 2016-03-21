@@ -23,6 +23,7 @@ class BaseController extends Controller
 
         $this->view->navTab = 0;
         $this->view->staticDomain = \Phalcon\DI::getDefault()->getConfig()['static'];
+        $this->view->requestParams = $this->p('*');
     }
 
     protected function ajaxSuccess($data = null)

@@ -3,3 +3,4 @@ Phalcon
 public/adminer.php
 public/mysql.php
 override.php
+nodejs/node_modules

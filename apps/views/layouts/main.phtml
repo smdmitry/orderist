@@ -11,7 +11,9 @@
     <link rel="stylesheet" href="<?=BaseTag::path('/base.css')?>" media="screen">
     <link rel="stylesheet" href="<?=BaseTag::path('/lib/spinner.css')?>" media="screen">
 
+    <noscript><meta http-equiv="refresh" content="0; URL=https://vk.com/badbrowser.php"></noscript>
     <script src="<?=BaseTag::path('/lib/jquery-1.12.2.min.js')?>"></script>
+    <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
     <script src="<?=BaseTag::path('/lib/bootstrap.min.js')?>"></script>
     <script src="<?=BaseTag::path('/lib/bootstrap.fix.js')?>"></script>
     <script src="<?=BaseTag::path('/base.js')?>"></script>
@@ -50,7 +52,7 @@
                         <a href="/user/cash/">Баланс: <span style="font-weight: bold;"><span class="user-cash"><?=UserDao::i()->getField($USER, 'cash')?></span> руб.</span></a>
                     </li>
                     <li class="dropdown <?=$navTab == BaseController::TAB_USER ? 'active' : 'unactive'?>">
-                        <a class="dropdown-toggle" data-toggle="dropdown" href="#"><?=$USER['name']?> <span class="caret"></span></a>
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="/user/"><?=$USER['name']?> <span class="caret"></span></a>
                         <ul class="dropdown-menu" aria-labelledby="download">
                             <li><a href="/user/cash/">Баланс</a></li>
                             <li><a href="/user/">Профиль</a></li>
@@ -76,6 +78,14 @@
 </div>
 
 <div id="modal-popup" class="modal fade" role="dialog"></div>
+
+<? if (!empty($requestParams['create'])): ?>
+    <script>
+        $(document).ready(function() {
+            orderist.order.createPopup();
+        });
+    </script>
+<? endif ?>
 
 </body>
 </html>

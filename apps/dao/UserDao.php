@@ -147,6 +147,10 @@ class UserDao extends BaseDao
 
         $res = $this->_update($userId, $update);
 
+        if ($res) {
+            BaseWS::i()->send($userId, ['type' => 'cash']);
+        }
+
         return $res ? $paymentId : false;
     }
 

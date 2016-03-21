@@ -364,3 +364,27 @@ var orderist = {
         }
     }
 };
+
+$(document).ready(function () {
+    var socket = io.connect('http://orderist.smdmitry.com:8080');
+    socket.on('message', function (data) {
+        console.log('socket', data);
+        if (data.type == 'cash') {
+            //orderist.user.updateCash();
+        } else if (data.type == 'order') {
+            if (data.action == 'executed') {
+                var block = $('#order-'+data.id);
+                block.addClass('disabled');
+                $('button', block).html('Заказ выполнен');
+                $('button', block).removeAttr('onclick');
+            } else if (data.action == 'deleted') {
+                var block = $('#order-'+data.id);
+                block.addClass('disabled');
+                $('button', block).html('Заказ удалён');
+                $('button', block).removeAttr('onclick');
+            } else if (data.action == 'created') {
+                // add new orders block
+            }
+        }
+    });
+});

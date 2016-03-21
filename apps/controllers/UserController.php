@@ -22,6 +22,7 @@ class UserController extends BaseController
 
 		$this->view->state = $state;
 		$this->view->orders = $orders;
+		$this->view->isMe = true;
 
 		$this->view->navTab = self::TAB_MY_ORDERS;
 	}
@@ -37,6 +38,7 @@ class UserController extends BaseController
 		$orders = OrderDao::i()->getUserOrders($this->USER['id'], $state, self::ORDERS_PER_PAGE, $lastOrderId);
         $orders = OrderDao::i()->prepareOrders($orders);
 		$this->view->orders = $orders;
+		$this->view->isMe = true;
 
 		$hasNext = count($orders) >= self::ORDERS_PER_PAGE;
 
@@ -80,6 +82,10 @@ class UserController extends BaseController
 
 	public function signupAction()
 	{
+		if (!$this->isAjax()) {
+			return $this->redirect('/');
+		}
+
 		if ($this->USER) {
 			return $this->ajaxSuccess(['redirect' => '/orders/']);
 		}
@@ -119,6 +125,10 @@ class UserController extends BaseController
 
 	public function loginAction()
 	{
+		if (!$this->isAjax()) {
+			return $this->redirect('/');
+		}
+
         if ($this->USER) {
             return $this->ajaxSuccess(['redirect' => '/orders/']);
         }
@@ -173,4 +183,13 @@ class UserController extends BaseController
 
         return $this->ajaxSuccess();
     }
+
+	public function authAction()
+	{
+		if ($this->USER) {
+			return $this->ajaxSuccess(['user_id' => $this->USER['id']]);
+		}
+
+		return $this->ajaxSuccess();
+	}
 }

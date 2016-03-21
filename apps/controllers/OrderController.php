@@ -19,6 +19,10 @@ class OrderController extends BaseController
 
     public function createAction()
     {
+        if (!$this->isAjax()) {
+            return $this->redirect('/?create=1');
+        }
+
         $user = $this->USER;
         if (!$user) {
             return $this->ajaxError(['error' => 'auth']);
@@ -81,6 +85,10 @@ class OrderController extends BaseController
         $user = UserDao::i()->getById($user['id']);
         $this->updateUserData($user);
 
+        if (!empty($orderId) && $orderId) {
+            BaseWS::i()->send(0, ['type' => 'order', 'action' => 'created', 'id' => $orderId]);
+        }
+
         return !empty($orderId) && $orderId ? $this->ajaxSuccess() : $this->ajaxError([
             'error' => 'Произошла ошибка, попробуйте ещё раз.',
         ]);
@@ -88,6 +96,10 @@ class OrderController extends BaseController
 
     public function executeAction()
     {
+        if (!$this->isAjax()) {
+            return $this->redirect('/');
+        }
+
         if (!$this->USER) {
             return $this->ajaxError(['error' => 'auth']);
         }
@@ -134,6 +146,11 @@ class OrderController extends BaseController
         $user = UserDao::i()->getById($this->USER['id']);
         $this->updateUserData($user);
 
+        if ($res) {
+            BaseWS::i()->send($order['user_id'], ['type' => 'order', 'action' => 'executed', 'id' => $orderId]);
+            // TODO: global orders search
+        }
+
         return $res ? $this->ajaxSuccess() : $this->ajaxError([
             'error' => 'Произошла ошибка, попробуйте ещё раз.',
         ]);
@@ -141,6 +158,10 @@ class OrderController extends BaseController
 
     public function deleteAction()
     {
+        if (!$this->isAjax()) {
+            return $this->redirect('/');
+        }
+
         if (!$this->USER) {
             return $this->ajaxError(['error' => 'auth']);
         }
@@ -180,6 +201,11 @@ class OrderController extends BaseController
 
         $user = UserDao::i()->getById($this->USER['id']);
         $this->updateUserData($user);
+
+        if ($res) {
+            BaseWS::i()->send($order['user_id'], ['type' => 'order', 'action' => 'deleted', 'id' => $orderId]);
+            // TODO: global orders search
+        }
 
         return $res ? $this->ajaxSuccess() : $this->ajaxError([
             'error' => 'Произошла ошибка, попробуйте ещё раз.',
