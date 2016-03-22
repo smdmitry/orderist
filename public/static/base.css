@@ -26,8 +26,8 @@ body {
 
 .order-block .order-desc {
     margin: 10px 10px 10px 0;
-    padding-right: 100px;
     min-height: 20px;
+    width: 540px;
 }
 .order-block .order-desc a {
     font-size: 14px;
@@ -102,3 +102,23 @@ body {
 .loading .loader-img { display: inline-block; }
 
 .h { display: none; }
+
+.order-block .shorten {
+    overflow: hidden;
+    position: relative;
+}
+.order-block .shorten::after {
+    background: rgba(0, 0, 0, 0) url('img/bg-shorter.png') repeat scroll 0 0;
+    bottom: 0;
+    content: '';
+    height: 20px;
+    position: absolute;
+    left: 0;
+    right: 0;
+}
+.order-block:hover .shorten::after {
+    background: rgba(0, 0, 0, 0) url('img/bg-shorter.png') repeat scroll 0 -20px;
+}
+
+.alert-danger a { text-decoration: underline; color: white; }
+.alert-danger a:hover { text-decoration: none; }

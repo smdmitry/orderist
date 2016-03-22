@@ -77,7 +77,7 @@ var orderist = {
                             errorBlock.append('<div class="alert alert-dismissible alert-danger">'+error+'</div>')
                         });
                     } else {
-                        var errorText = response.data.error || 'Ошибка!';
+                        var errorText = response.data.error || 'Ошибка, попробуйте ещё раз!';
                         if (errorBlock.length) {
                             errorBlock.html('<div class="alert alert-dismissible alert-danger">' + errorText + '</div>');
                         } else {
@@ -228,10 +228,14 @@ var orderist = {
                 orderist.core.processResponse(response);
             });
         },
-        addCash: function(amount) {
+        addCash: function(amount, callback) {
             orderist.core.post('/user/addcash/', {amount: amount}, function (response) {
-                orderist.core.processResponse(response);
+                var res = orderist.core.processResponse(response);
                 orderist.user.reloadPayments();
+
+                if (callback) {
+                    callback(res);
+                }
             });
         },
         reloadCash: function() {
@@ -265,36 +269,57 @@ var orderist = {
         }
     },
     order: {
-        createPopup: function () {
-            orderist.core.post('/order/createpopup/', {}, function (response) {
-                if (orderist.core.processResponse(response) && response.data.html) {
-                    $('#order-create-popup input[name=order_price]').bind('keyup', function() {
-                        var result = this.value.replace(/[^0-9\.]/g, '')
-                        if (result != this.value) {
-                            this.value = result;
-                        }
-                        if (this.value) {
-                            var result = Number(this.value.toString().match(/^\d+(?:\.\d{0,2})?/));
-                            if (this.value != result) {
-                                this.value = result;
-                            }
-                        }
-                    });
-                    $('#order-create-popup input[name=order_price]').bind('input', function() {
-                        var price = $(this).val().replace(/[^0-9\.]/g, '');
-                        var popup = $('#order-create-popup');
-                        var commission = $('.order-commission', popup).data('value');
-
-                        price = price * 100;
-                        var commissionPrice = Math.ceil(price * commission);
-                        var executerPrice = (price - commissionPrice) / 100;
-                        var realCommission = price == 0 ? (commission * 100) : Math.ceil(commissionPrice / price * 100);
-
-                        $('.order-commission', popup).html(realCommission + '%');
-                        $('.executer-price', popup).html(parseFloat(executerPrice.toFixed(2)));
-                    });
+        init: function(id) {
+            var where = id == 'all' ? $('body') : $('#order-'+id);
+            $('.order-desc:not(.shorted)', where).each(function() {
+                var el = $(this);
+                var maxHeight = 165;
+                if (el.height() > maxHeight) {
+                    el.parent().addClass('expandable').attr('onclick', '$(\'.shorter-link\', $(this)).click();');
+                    el.addClass('shorten').css('max-height', maxHeight + 'px');
+                    el.after('<a class="shorter-link" onclick="$(this).prev().removeClass(\'shorten\').addClass(\'shorted\').css(\'max-height\', \'\'); $(this).remove(); return false;">Показать полностью</a>');
                 }
             });
+        },
+        createPopup: {
+            open: function () {
+                orderist.core.post('/order/createpopup/', {}, function (response) {
+                    if (orderist.core.processResponse(response) && response.data.html) {
+                        $('#order-create-popup input[name=order_price]').bind('keyup', function () {
+                            var result = this.value.replace(/[^0-9\.]/g, '')
+                            if (result != this.value) {
+                                this.value = result;
+                            }
+                            if (this.value) {
+                                var result = Number(this.value.toString().match(/^\d+(?:\.\d{0,2})?/));
+                                if (this.value != result) {
+                                    this.value = result;
+                                }
+                            }
+                        });
+                        $('#order-create-popup input[name=order_price]').bind('input', function () {
+                            var price = $(this).val().replace(/[^0-9\.]/g, '');
+                            var popup = $('#order-create-popup');
+                            var commission = $('.order-commission', popup).data('value');
+
+                            price = price * 100;
+                            var commissionPrice = Math.ceil(price * commission);
+                            var executerPrice = (price - commissionPrice) / 100;
+                            var realCommission = price == 0 ? (commission * 100) : Math.ceil(commissionPrice / price * 100);
+
+                            $('.order-commission', popup).html(realCommission + '%');
+                            $('.executer-price', popup).html(parseFloat(executerPrice.toFixed(2)));
+                        });
+                    }
+                });
+            },
+            addCash: function(amount, callback) {
+                orderist.user.addCash(amount, function(res) {
+                    if (res) {
+                        $('#order-create-popup .errors-block').html('<div class="alert alert-success">Спасибо, ваш счет пополнен на '+ (amount/100) +' руб.!</div>');
+                    }
+                });
+            }
         },
         create: function() {
             var popup = $('#order-create-popup');
@@ -360,13 +385,6 @@ var orderist = {
                 }
             });
         },
-        expand: function(id) {
-            var block = $('#order-'+id);
-            block.removeClass('expandable');
-            $('.more', block).remove();
-            $('.hyp', block).remove();
-            $('.collapsed', block).show();
-        },
         isLoading: false,
         isFinished: false,
         loadMoreUrl: '/index/getpage/',
@@ -382,6 +400,7 @@ var orderist = {
                 if (!response.data.has_next) orderist.order.isFinished = true;
                 orderist.order.isLoading = false;
                 $('#orders-block').append(response.data.html);
+                orderist.order.init('all');
             });
         },
         reload: function() {

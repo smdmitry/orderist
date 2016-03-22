@@ -13,7 +13,7 @@
         $stateText = !$state ? '' : ($state === OrderDao::STATE_NEW ? ' активных' : ' выполненных');
         ?>
         <h4>
-            У вас нет<?=$stateText?> заказов. Вы можете <a href="/order/create/" onclick="orderist.order.createPopup(); return false;">разместить новый заказ</a>.
+            У вас нет<?=$stateText?> заказов. Вы можете <a href="/order/create/" onclick="orderist.order.createPopup.open(); return false;">разместить новый заказ</a>.
         </h4>
     <? endif ?>
 

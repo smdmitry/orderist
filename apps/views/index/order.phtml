@@ -1,15 +1,17 @@
 <?
-$price = ($order['price'] - $order['commission']) / 100;
-
-$descLenthLimit = 350;
-$description = $order['description'];
-$expandable = mb_strlen($description) >= $descLenthLimit;
+    $isMy = $USER && !empty($isMe);
+    $price = $isMy ? $order['price'] / 100 : (($order['price'] - $order['commission']) / 100);
 ?>
-<div id="order-<?=$order['id']?>" data-id="<?=$order['id']?>" class="row col-md-10 col-md-offset-1 order-block<?=$order['state'] != OrderDao::STATE_NEW ? ' disabled' : ''?><?=$expandable ? ' expandable' : ''?>"
+<div id="order-<?=$order['id']?>" data-id="<?=$order['id']?>" class="row col-md-10 col-md-offset-1 order-block<?=$order['state'] != OrderDao::STATE_NEW ? ' disabled' : ''?>"
      onclick="orderist.order.expand('<?=$order['id']?>')">
     <div class="order-price" style="text-align: right;">
-        <div class="order-get-text" style="margin-bottom: 10px; font-size: 12px; color: gray;">Вы получите:</div>
-        <span class="label label-warning"><?=number_format($price, 2, ',', ' ')?> р.</span>
+        <? if ($isMy): ?>
+            <div class="order-get-text" style="margin-bottom: 10px; font-size: 12px; color: gray;">Вы заплатите:</div>
+            <span class="label label-info"><?=number_format($price, 2, ',', ' ')?> р.</span>
+        <? else: ?>
+            <div class="order-get-text" style="margin-bottom: 10px; font-size: 12px; color: gray;">Вы получите:</div>
+            <span class="label label-warning"><?=number_format($price, 2, ',', ' ')?> р.</span>
+        <? endif ?>
     </div>
 
     <div class="order-title">
@@ -17,13 +19,7 @@ $expandable = mb_strlen($description) >= $descLenthLimit;
     </div>
 
     <div class="order-desc">
-        <? if ($expandable): ?>
-            <?=mb_substr($description, 0, $descLenthLimit) . '<span class="more">...</span>'?>
-            <span class="collapsed" style="display: none;"><?=mb_substr($description, $descLenthLimit)?></span><br><br>
-            <a href="/order/<?=$order['id']?>/" class="hyp" onclick="orderist.order.expand('<?=$order['id']?>'); return false;">Показать полностью</a>
-        <? else: ?>
-            <?=$description?>
-        <? endif ?>
+        <?=$order['description']?>
     </div>
 
     <div class="order-footer">
@@ -33,9 +29,15 @@ $expandable = mb_strlen($description) >= $descLenthLimit;
         <div class="order-buttons">
             <? if ($order['state'] == OrderDao::STATE_NEW): ?>
                 <span class="loader"></span>
-                <button type="button" onclick="orderist.order.execute('<?=$order['id']?>'); event.stopPropagation(); return false;" class="btn btn-loading btn-info order-button">
-                    Выполнить заказ
-                </button>
+                <? if ($isMy): ?>
+                    <button type="button" onclick="orderist.order.deleteConfirm('<?=$order['id']?>'); event.stopPropagation(); return false;" class="btn btn-loading btn-danger order-button">
+                        Удалить заказ
+                    </button>
+                <? else: ?>
+                    <button type="button" onclick="orderist.order.execute('<?=$order['id']?>'); event.stopPropagation(); return false;" class="btn btn-loading btn-info order-button">
+                        Выполнить заказ
+                    </button>
+                <? endif ?>
             <? else: ?>
                 <button type="button" onclick="event.stopPropagation(); return false;" class="btn btn-info order-button">
                     Заказ выполнен
@@ -44,3 +46,6 @@ $expandable = mb_strlen($description) >= $descLenthLimit;
         </div>
     </div>
 </div>
+<script>
+    orderist.order.init('<?=$order['id']?>');
+</script>

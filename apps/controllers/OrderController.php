@@ -38,8 +38,10 @@ class OrderController extends BaseController
         $price = (int)floor($price * 100);
 
         $errors = [];
-        if (mb_strlen($title) < 3) {
+        if (mb_strlen($title) < 1) {
             $errors[] = 'Введите заголовок заказа!';
+        } else if (mb_strlen($title) > 160) {
+            $errors[] = 'Сликом длинный заголовок, будьте лаконичней!';
         }
         if ($price == 0) {
             $errors[] = 'Укажите стоимость заказа!';
@@ -64,7 +66,7 @@ class OrderController extends BaseController
                 LockDao::i()->unlock(LockDao::USER, $userId);
                 $need = ($price - $cash) / 100;
                 return $this->ajaxError([
-                    'error' => "Вам на хватает {$need} руб., для создания заказа, попробуйте снизить стоимость!",
+                    'error' => "Ой, вам на хватает <b>{$need} руб.</b> для создания заказа!<br>Попробуйте снизить стоимость или <b><a href=\"/user/cash/\" onclick=\"orderist.order.createPopup.addCash('". (int)($need*100) ."'); return false;\">пополнить счет сейчас</a></b>.",
                 ]);
             }
 

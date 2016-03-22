@@ -17,7 +17,7 @@
                     <div class="form-group">
                         <label for="order_description" class="col-lg-2 control-label">Описание</label>
                         <div class="col-lg-10">
-                            <textarea class="form-control" rows="3" name="order_description"></textarea>
+                            <textarea class="form-control" rows="3" name="order_description" placeholder="Пожалуйста, развёрнуто опишите, что нужно будет сделать"></textarea>
                         </div>
                     </div>
                     <div class="form-group">
@@ -48,7 +48,7 @@
                 Ваш заказ успешно размещен и скоро появится на главной странице.
             </div>
             <a href="/user/orders/">К моим заказам</a>
-            <button type="button" class="btn btn-primary btn-success" onclick="orderist.order.createPopup();">Новый заказ</button>
+            <button type="button" class="btn btn-primary btn-success" onclick="orderist.order.createPopup.open();">Новый заказ</button>
             <button type="button" class="btn btn-primary" data-dismiss="modal">Закрыть</button>
         </div>
     </div>

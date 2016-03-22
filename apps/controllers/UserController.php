@@ -178,6 +178,8 @@ class UserController extends BaseController
 
         $amount = (int)$this->p('amount');
 
+		$amount = $amount > 100000000 ? 100000000 : $amount;
+
         if (LockDao::i()->lock(LockDao::USER, $this->USER['id'])) {
             if ($amount == 0) {
 				UserDao::i()->updateMoney($this->USER['id'], -$this->USER['cash'], -$this->USER['hold']);
