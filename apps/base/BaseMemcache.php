@@ -36,7 +36,7 @@ class BaseMemcache extends \Phalcon\DI\Injectable
         return $this->mc->set($key, $value, 0, $ttl);
     }
 
-    public function add($key, $value, $ttl)
+    public function _add($key, $value, $ttl)
     {
         if (DEBUG) finfo("Memcache: add {$key}");
         return $this->mc->add($key, $value, 0, $ttl);
@@ -126,11 +126,28 @@ class BaseMemcache extends \Phalcon\DI\Injectable
         $time = microtime(true);
 
         $result = $this->_set($key, $value, $seconds);
+        if ($result) {
+            // заносим в статический кеш
+            $this->cacheData[$key] = $value;
+            $this->cachedTS[$key] = $time;
+            unset($this->cacheDelete[$key], $this->cachedDelTS[$key]);
+        }
 
-        // заносим в статический кеш
-        $this->cacheData[$key] = $value;
-        $this->cachedTS[$key] = $time;
-        unset($this->cacheDelete[$key], $this->cachedDelTS[$key]);
+        return $result;
+    }
+
+    public function add($key, $value, $seconds = 900)
+    {
+        $seconds = $seconds <= 2592000 ? (int)$seconds : 2592000; // мемкеш не ставит ключик, если указано время больше 30 дней
+        $time = microtime(true);
+
+        $result = $this->_add($key, $value, $seconds);
+        if ($result) {
+            // заносим в статический кеш
+            $this->cacheData[$key] = $value;
+            $this->cachedTS[$key] = $time;
+            unset($this->cacheDelete[$key], $this->cachedDelTS[$key]);
+        }
 
         return $result;
     }
@@ -139,7 +156,7 @@ class BaseMemcache extends \Phalcon\DI\Injectable
     {
         $time = microtime(true);
 
-        if (isset($this->cacheDelete[$key]) && ($time - $this->cachedDelTS[$key] < $this->CACHED_TTL)) return true;
+        //if (isset($this->cacheDelete[$key]) && ($time - $this->cachedDelTS[$key] < $this->CACHED_TTL)) return true;
         $result = $this->_delete($key);
 
         // удаляем из статического кеша
@@ -150,8 +167,12 @@ class BaseMemcache extends \Phalcon\DI\Injectable
         return $result;
     }
 
-    public function flushStaticCache()
+    public function flushStaticCache($key = null)
     {
-        $this->cacheData = $this->cachedTS = $this->cacheDelete = $this->cachedDelTS = [];
+        if ($key === null) {
+            $this->cacheData = $this->cachedTS = $this->cacheDelete = $this->cachedDelTS = [];
+        } else {
+            unset($this->cacheData[$key], $this->cachedTS[$key], $this->cacheDelete[$key], $this->cachedDelTS[$key]);
+        }
     }
 }

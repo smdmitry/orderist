@@ -16,8 +16,7 @@ class BaseController extends Controller
     {
         $user = BaseAuth::i()->getAuthUser();
 
-        $this->user = $this->USER = $user;
-        $this->view->user = $this->view->USER = $user;
+        $this->view->USER = $this->USER = $user;
 
         $this->view->e = new Phalcon\Escaper();
 
@@ -48,8 +47,6 @@ class BaseController extends Controller
             $result['base'] = $this->baseData;
         }
 
-        $this->debugSleep($data);
-
         header('Content-Type: application/json');
 
         $response = new \Phalcon\Http\Response();
@@ -63,12 +60,10 @@ class BaseController extends Controller
     {
         $this->view->setRenderLevel(\Phalcon\Mvc\View::LEVEL_NO_RENDER);
 
-        $result = array(
+        $result = [
             'res' => 0,
             'data' => $data,
-        );
-
-        $this->debugSleep($data);
+        ];
 
         header('Content-Type: application/json');
 
@@ -115,9 +110,9 @@ class BaseController extends Controller
         return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
     }
 
-    public function updateUserData($user = null, $event = true)
+    public function updateUserData($event = true)
     {
-        $user = $user ? $user : $this->USER;
+        $user = $this->USER;
         if (!empty($user)) {
             $cash = UserDao::i()->getField($user, 'cash');
             $hold = UserDao::i()->getField($user, 'hold');
@@ -138,7 +133,7 @@ class BaseController extends Controller
         $this->baseData = array_merge($this->baseData, $data);
     }
 
-    private function debugSleep($data)
+    protected function debugSleep($data)
     {
         if (DEBUG && $this->isAjax() && empty($data['html'])) {
             usleep(rand() % 2 ? rand(1, 1000) : rand(1000000, 3000000));

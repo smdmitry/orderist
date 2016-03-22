@@ -17,14 +17,11 @@ class IndexController extends BaseController
 
 	public function getpageAction()
 	{
-		$lastOrderId = $this->p('last_order_id');
-		$orders = $this->_prepareOrders($lastOrderId);
-
-		$hasNext = count($orders) >= self::ORDERS_PER_PAGE;
+		$this->_prepareOrders($this->p('last_order_id'));
 
 		$data = [
 			'html' => $this->renderView('index/orders_block'),
-			'has_next' => $hasNext,
+			'has_next' => $this->view->hasNext,
 		];
 
 		$this->ajaxSuccess($data);
@@ -35,6 +32,7 @@ class IndexController extends BaseController
 		$orders = OrderDao::i()->getOrders(OrderDao::STATE_NEW, self::ORDERS_PER_PAGE, $lastOrderId);
 		$orders = OrderDao::i()->prepareOrders($orders);
 		$this->view->orders = $orders;
+		$this->view->hasNext = count($orders) >= self::ORDERS_PER_PAGE;
 		return $orders;
 	}
 }

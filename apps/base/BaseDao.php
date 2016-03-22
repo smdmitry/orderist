@@ -48,12 +48,12 @@ class BaseDao
         }
 
         foreach ($dataFromDb as $id => $row) {
-            BaseMemcache::i()->set($mckey . $id, $row, $mctime);
+            BaseMemcache::i()->add($mckey . $id, $row, $mctime);
         }
 
         $keysNotFoundInDb = array_diff_key($keysForDb, $dataFromDb);
         foreach ($keysNotFoundInDb as $id => $row) {
-            BaseMemcache::i()->set($mckey . $id, $defaultValue, $mctime);
+            BaseMemcache::i()->add($mckey . $id, $defaultValue, $mctime);
             $dataFromDb[$id] = $defaultValue;
         }
 

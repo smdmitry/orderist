@@ -2,7 +2,7 @@
 
 class BackgroundWorker extends \Phalcon\DI\Injectable
 {
-    protected $_jobs = array();
+    protected $_jobs = [];
 
     public static function i() { static $instance; if (empty($instance)) $instance = new static(); return $instance;}
     protected function __construct() {}
@@ -22,12 +22,16 @@ class BackgroundWorker extends \Phalcon\DI\Injectable
         }
     }
 
-    public function addJob($function, $params = array(), $id = null)
+    public function addJob($function, $params = [], $id = null)
     {
+        if (DEBUG) {
+            return call_user_func_array($function, $params);
+        }
+
         if ($id === null) {
-            $this->_jobs[] = array($function, $params);
+            $this->_jobs[] = [$function, $params];
         } else {
-            $this->_jobs[] = array($function, $params);
+            $this->_jobs[] = [$function, $params];
         }
 
         return $this;

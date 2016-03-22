@@ -19,8 +19,14 @@ class UserDao extends BaseDao
         return self::TABLE_PAYMENTS . '_' . $shardId;
     }
 
-    public function getById($id)
+    public function getById($id, $skipcache = 0)
     {
+        if ($skipcache >= 2) {
+            return reset($this->getUsersFromDb([$id]));
+        } else if ($skipcache == 1) {
+            BaseMemcache::i()->flushStaticCache(self::MC_KEY.$id);
+        }
+
         $ids = $this->getByIds([$id]);
         return reset($ids);
     }
@@ -116,18 +122,6 @@ class UserDao extends BaseDao
         return $this->_addUser($name, $email, $password);
     }
 
-    protected function _update($userId, $bind)
-    {
-        $bind['updated'] = time();
-        $res = $this->db->update(self::TABLE_USER, $bind, $this->db->qq("id = ?", $userId));
-
-        if ($res) {
-            $this->clearCache($userId);
-        }
-
-        return $res;
-    }
-
     public function updateMoney($userId, $amount, $hold = 0, $orderId = 0)
     {
         $userId = (int)$userId;
@@ -156,12 +150,21 @@ class UserDao extends BaseDao
         $update = [
             'cash' => $this->db->expr('cash + ?', $amount),
             'hold' => $this->db->expr('IF(hold + ? <= 0, 0, hold + ?)', [$hold, $hold]),
+            'updated' => time(),
         ];
         if ($paymentId !== true && $paymentId) {
             $update['payment_id'] = $paymentId;
         }
 
-        $res = $this->_update($userId, $update);
+        $res = $this->db->update(self::TABLE_USER, $update, $this->db->qq("id = ?", $userId));
+        if ($res) {
+            $user = $this->getById($userId, 2);
+            if ($user) {
+                BaseMemcache::i()->set(self::MC_KEY.$userId, $user, self::MC_TIME);
+            } else {
+                $this->clearCache($userId);
+            }
+        }
 
         return $res ? $paymentId : false;
     }

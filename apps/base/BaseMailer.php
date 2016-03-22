@@ -36,14 +36,14 @@ class BaseMailer extends \Phalcon\DI\Injectable
     protected function getTypes()
     {
         return array(
-            self::TYPE_SIGNUP => array(
+            self::TYPE_SIGNUP => [
                 'subject' => 'Регистрация',
                 'tpl' => 'signup',
-            ),
-            self::TYPE_RECOVER_PASSWORD => array(
+            ],
+            self::TYPE_RECOVER_PASSWORD => [
                 'subject' => 'Восстановление пароля',
                 'tpl' => 'recover_password',
-            ),
+            ],
         );
     }
 

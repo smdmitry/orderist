@@ -90,7 +90,7 @@ class DbDriverSelect
         } else {
             $spec = DbDriverBase::quoteIdentifier($spec);
         }
-        $spec = str_ireplace(array(' ASC`', ' DESC`'), array('` ASC', '` DESC'), $spec);
+        $spec = str_ireplace([' ASC`', ' DESC`'], ['` ASC', '` DESC'], $spec);
         if (!mb_stripos($spec, 'ASC') && !mb_stripos($spec, 'DESC')) $spec .= ' ASC';
 
         if (!isset($this->string['order'])) {

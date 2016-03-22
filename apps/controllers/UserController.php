@@ -17,12 +17,7 @@ class UserController extends BaseController
         }
 
 		$state = (int)$this->p('state', OrderDao::STATE_NEW);
-		$orders = OrderDao::i()->getUserOrders($this->USER['id'], $state, self::ORDERS_PER_PAGE);
-        $orders = OrderDao::i()->prepareOrders($orders);
-
-		$this->view->state = $state;
-		$this->view->orders = $orders;
-		$this->view->isMe = true;
+		$this->_prepareOrders($state);
 
 		$this->view->navTab = self::TAB_MY_ORDERS;
 	}
@@ -35,19 +30,26 @@ class UserController extends BaseController
 		$lastOrderId = (int)$this->p('last_order_id', 0);
 		$state = (int)$this->p('state', 0);
 
-		$orders = OrderDao::i()->getUserOrders($this->USER['id'], $state, self::ORDERS_PER_PAGE, $lastOrderId);
-        $orders = OrderDao::i()->prepareOrders($orders);
-		$this->view->orders = $orders;
-		$this->view->isMe = true;
-
-		$hasNext = count($orders) >= self::ORDERS_PER_PAGE;
+		$this->_prepareOrders($state, $lastOrderId);
 
 		$data = [
 			'html' => $this->renderView('index/orders_block'),
-			'has_next' => $hasNext,
+			'has_next' => $this->view->hasNext,
 		];
 
 		$this->ajaxSuccess($data);
+	}
+	protected function _prepareOrders($state, $lastOrderId = 0)
+	{
+		$orders = OrderDao::i()->getUserOrders($this->USER['id'], $state, self::ORDERS_PER_PAGE, $lastOrderId);
+		$orders = OrderDao::i()->prepareOrders($orders);
+
+		$this->view->state = $state;
+		$this->view->orders = $orders;
+		$this->view->isMe = true;
+		$this->view->hasNext = count($orders) >= self::ORDERS_PER_PAGE;
+
+		return $orders;
 	}
 
 	public function cashAction()
@@ -56,6 +58,7 @@ class UserController extends BaseController
             return $this->ajaxSuccess(['redirect' => '/']);
         }
 
+		$this->_preparePayments();
 		$this->view->navTab = self::TAB_CASH;
         $this->view->payments = UserDao::i()->getUserPayments($this->USER['id'], self::PAYMENTS_PER_PAGE);
 	}
@@ -66,19 +69,22 @@ class UserController extends BaseController
         }
 
         $lastPaymentId = (int)$this->p('last_payment_id', 0);
-
-        $payments = UserDao::i()->getUserPayments($this->USER['id'], self::PAYMENTS_PER_PAGE, $lastPaymentId);
-        $this->view->payments = $payments;
-
-        $hasNext = count($payments) >= self::PAYMENTS_PER_PAGE;
+		$this->_preparePayments($lastPaymentId);
 
         $data = [
             'html' => $this->renderView('user/payments_block'),
-            'has_next' => $hasNext,
+            'has_next' => $this->view->hasNext,
         ];
 
         $this->ajaxSuccess($data);
     }
+	protected function _preparePayments($lastPaymentId = 0)
+	{
+		$payments = UserDao::i()->getUserPayments($this->USER['id'], self::PAYMENTS_PER_PAGE, $lastPaymentId);
+		$this->view->payments = $payments;
+		$this->view->hasNext = count($payments) >= self::PAYMENTS_PER_PAGE;
+		return $payments;
+	}
 
 	public function signupAction()
 	{
@@ -89,17 +95,14 @@ class UserController extends BaseController
 		if ($this->USER) {
 			return $this->ajaxSuccess(['redirect' => '/orders/']);
 		}
-		$filter = new \Phalcon\Filter();
 
-		$name = $filter->sanitize($this->p('user_name', ''), 'string');
-		$email = $filter->sanitize($this->p('user_email', ''), 'email');
-		$password = $this->p('user_password');
-
-		if ($this->p('name') || $this->p('email')) {
-			return $this->ajaxSuccess(['error' => 'Введите Ваше имя и Email']);
-		}
+		$name = BaseService::i()->filterText($this->p('user_name', ''));
+		$email = $this->p('user_email', '');
+		$password = $this->p('user_password', '');
 
 		if ($this->p('submit')) {
+			$this->debugSleep();
+
 			$password = $password ? $password : substr(md5(uniqid()), 0, 12);
 			$res = UserDao::i()->addUser($name, $email, $password);
 
@@ -138,6 +141,8 @@ class UserController extends BaseController
 		$password = $this->p('user_password', '');
 
 		if ($this->p('submit')) {
+			$this->debugSleep();
+
 			$user = UserDao::i()->getByEmail($email);
 
 			if ($user && password_verify($password, $user['password'])) {
@@ -167,6 +172,10 @@ class UserController extends BaseController
 			return $this->ajaxSuccess(['redirect' => '/orders/']);
 		}
 
+		if (!$this->checkCSRF()) {
+			return $this->ajaxError(['type' => 'csrf']);
+		}
+
         $amount = (int)$this->p('amount');
 
         if (LockDao::i()->lock(LockDao::USER, $this->USER['id'])) {
@@ -179,8 +188,8 @@ class UserController extends BaseController
 			LockDao::i()->unlock(LockDao::USER, $this->USER['id']);
         }
 
-        $user = UserDao::i()->getById($this->USER['id']);
-        $this->updateUserData($user);
+        $this->USER = UserDao::i()->getById($this->USER['id']);
+        $this->updateUserData();
 
         return $this->ajaxSuccess();
     }
@@ -191,11 +200,14 @@ class UserController extends BaseController
 			return $this->ajaxSuccess(['redirect' => '/orders/']);
 		}
 
-		$this->updateUserData($this->USER, false);
+		$this->updateUserData(false);
 
 		return $this->ajaxSuccess();
 	}
 
+	/**
+	 * Нужно для проверки авторизации юзера из NodeJS сервера
+	 */
 	public function authAction()
 	{
 		if ($this->USER) {

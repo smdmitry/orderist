@@ -67,7 +67,7 @@ class DbDriverConnection
                     $result[$row[0]] = $row[1];
                 }
             } elseif ($func == 'fetchAssoc') {
-                $result = array();
+                $result = [];
                 while ($row = $sth->fetch(PDO::FETCH_ASSOC)) {
                     $tmp = array_values(array_slice($row, 0, 1));
                     $result[$tmp[0]] = $row;

@@ -31,6 +31,12 @@ class BaseService extends \Phalcon\DI\Injectable
         return number_format($amount / 100, 2, '.', ' ');
     }
 
+    public function filterText($str)
+    {
+        $str = preg_replace('!\s+!', ' ', $str);
+        return htmlspecialchars(trim(strip_tags($str)));
+    }
+
     // CSRF Double Submit Cookies http://smd.im/dVM
     public function setCSRFToken()
     {
