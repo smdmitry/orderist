@@ -17,10 +17,6 @@ class OrderController extends BaseController
         $this->ajaxSuccess($data);
     }
 
-    /**
-     * TODO: Тут не предусмотрена ситуация, когда заказ создался, но деньги мы не заморозили, потому что база упала.
-     * В принципе можно забить, баланс денег не нарушится, просто юзер сможет в минус уйти
-     */
     public function createAction()
     {
         if (!$this->isAjax()) {
