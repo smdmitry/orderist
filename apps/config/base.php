@@ -33,3 +33,8 @@ if (file_exists('../apps/config/override.php')) {
     include 'override.php';
 }
 @define('DEBUG', $settings['debug']);
+
+if (DEBUG) {
+    error_reporting(E_ALL ^ E_STRICT);
+    ini_set('display_errors', 1);
+}

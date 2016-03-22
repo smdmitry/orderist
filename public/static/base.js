@@ -15,6 +15,9 @@ var orderist = {
                 url: url,
                 data: params,
                 success: callback,
+                error: function(xhr, ajaxOptions, thrownError) {
+                    callback({res: 0});
+                },
                 beforeSend: function (xhr, settings) {
                     function sameOrigin(url) {
                         var host = document.location.host;
