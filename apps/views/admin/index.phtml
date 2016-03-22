@@ -1,0 +1,8 @@
+<? if ($text): ?>
+    <div class="alert alert-info"><?=$text?></div>
+<? endif ?>
+<a href="/admin/debug/?debug=1">Включить отладку</a><br>
+<a href="/admin/debug/?debug=0">Выключить отладку</a><br>
+<a href="/admin/clearmemcache/">Очистить Memcache</a><br>
+<a href="/admin/recover/">Проверить целостность данных</a><br>
+<a target="_blank" href="/adminer.php">Администрирование MySQL</a> (Логин/Пароль: readonly)<br>

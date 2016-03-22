@@ -4,11 +4,8 @@ class AdminController extends BaseController
 {
     public function indexAction()
     {
-        $this->norender();
-        echo '<a target="_blank" href="/admin/debug/?debug=1">Включить отладку</a><br>';
-        echo '<a target="_blank" href="/admin/debug/?debug=0">Выключить отладку</a><br>';
-        echo '<a target="_blank" href="/admin/clearmemcache/">Очистить Memcache</a><br>';
-        echo '<a target="_blank" href="/adminer.php">Администрирование MySQL</a><br>';
+        $this->view->text = BaseMemcache::i()->get('admintext');
+        BaseMemcache::i()->delete('admintext');
     }
 
     public function testAction()
@@ -20,17 +17,22 @@ class AdminController extends BaseController
     {
         $debug = (int)$this->p('debug', 0);
         $res = BaseService::i()->setCookie('debug', $debug, 3600);
-        $this->ajaxSuccess(['res' => $res, 'debug' => $debug]);
+        BaseMemcache::i()->set('admintext', $debug ? 'Отладка включена' : 'Отладка выключена', 60);
+        $this->redirect('/admin/');
     }
 
     public function clearmemcacheAction()
     {
         $res = BaseMemcache::i()->mc->flush();
-        $this->ajaxSuccess(['res' => $res]);
+        BaseMemcache::i()->set('admintext', $res ? 'Memcache очищен' : 'Ошибка', 60);
+        $this->redirect('/admin/');
     }
 
     public function recoverAction()
     {
         // Тут будет восстановление после сбоя
+        $res = true;
+        BaseMemcache::i()->set('admintext', $res ? 'Всё ОК' : 'Исправили пару ошибок', 60);
+        $this->redirect('/admin/');
     }
 }

@@ -122,3 +122,4 @@ body {
 
 .alert-danger a { text-decoration: underline; color: white; }
 .alert-danger a:hover { text-decoration: none; }
+.modal-footer .alert { text-align: left; }

@@ -316,7 +316,7 @@ var orderist = {
             addCash: function(amount, callback) {
                 orderist.user.addCash(amount, function(res) {
                     if (res) {
-                        $('#order-create-popup .errors-block').html('<div class="alert alert-success">Спасибо, ваш счет пополнен на '+ (amount/100) +' руб.!</div>');
+                        $('#order-create-popup .errors-block').html('<div class="alert alert-success">Спасибо, ваш счет пополнен на '+ (amount/100) +' руб.</div>');
                     }
                 });
             }

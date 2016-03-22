@@ -37,4 +37,7 @@ if (file_exists('../apps/config/override.php')) {
 if (DEBUG) {
     error_reporting(E_ALL ^ E_STRICT);
     ini_set('display_errors', 1);
+
+    @define('FIRELOGGER_NO_VERSION_CHECK', true);
+    @define('FIRELOGGER_NO_ERROR_HANDLER', true);
 }
