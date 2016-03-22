@@ -52,6 +52,11 @@ var orderist = {
             if (response.base) {
                 response.base.cash && $('.user-cash').html(response.base.cash);
                 response.base.hold && $('.user-hold').html(response.base.hold);
+                if (response.base.hold == '0.00') {
+                    $('.user-cash-hold-block').hide();
+                } else {
+                    $('.user-cash-hold-block').show();
+                }
             }
             if (response.data) {
                 if (response.data.error && response.data.error == 'auth') {
@@ -334,6 +339,11 @@ var orderist = {
                     disableBtn(orderBlock);
                     $('.order-get-text', orderBlock).html('Вы получили:');
                 }
+            });
+        },
+        deleteConfirm: function (orderId) {
+            orderist.popup.confirm('Вы уверены, что хотите удалить заказ?', 'Отмена', 'Удалить', function(result) {
+                result && orderist.order.delete(orderId);
             });
         },
         delete: function (orderId) {

@@ -24,7 +24,7 @@ class UserController extends BaseController
 	public function getorderspageAction()
 	{
         if (!$this->USER) {
-            return $this->ajaxSuccess(['redirect' => '/orders/']);
+			return $this->redirect('/');
         }
 
 		$lastOrderId = (int)$this->p('last_order_id', 0);
@@ -55,7 +55,7 @@ class UserController extends BaseController
 	public function cashAction()
 	{
         if (!$this->USER) {
-            return $this->ajaxSuccess(['redirect' => '/']);
+            return $this->redirect('/');
         }
 
 		$this->_preparePayments();
@@ -65,7 +65,7 @@ class UserController extends BaseController
     public function getpaymentspageAction()
     {
         if (!$this->USER) {
-            return $this->ajaxSuccess(['redirect' => '/']);
+			return $this->redirect('/');
         }
 
         $lastPaymentId = (int)$this->p('last_payment_id', 0);
@@ -93,7 +93,7 @@ class UserController extends BaseController
 		}
 
 		if ($this->USER) {
-			return $this->ajaxSuccess(['redirect' => '/orders/']);
+			return $this->redirect('/orders/');
 		}
 
 		$name = BaseService::i()->filterText($this->p('user_name', ''));
@@ -116,7 +116,7 @@ class UserController extends BaseController
                     'password' => $password,
                 ]);
 
-				return $this->ajaxSuccess(['redirect' => '/orders/']);
+				return $this->redirect('/');
 			}
 		}
 
@@ -134,7 +134,7 @@ class UserController extends BaseController
 		}
 
         if ($this->USER) {
-            return $this->ajaxSuccess(['redirect' => '/orders/']);
+			return $this->redirect('/orders/');
         }
 
 		$email = $this->p('user_email', '');
@@ -147,7 +147,7 @@ class UserController extends BaseController
 
 			if ($user && password_verify($password, $user['password'])) {
 				BaseAuth::i()->authUser($user);
-				return $this->ajaxSuccess(['redirect' => '/orders/']);
+				return $this->redirect('/orders/');
 			} else {
 				return $this->ajaxSuccess(['error' => 'Неправильный Email или пароль.']);
 			}
@@ -169,7 +169,7 @@ class UserController extends BaseController
     public function addcashAction()
     {
 		if (!$this->USER) {
-			return $this->ajaxSuccess(['redirect' => '/orders/']);
+			return $this->redirect('/');
 		}
 
 		if (!$this->checkCSRF()) {
@@ -197,7 +197,7 @@ class UserController extends BaseController
 	public function getcashAction()
 	{
 		if (!$this->USER) {
-			return $this->ajaxSuccess(['redirect' => '/orders/']);
+			return $this->redirect('/');
 		}
 
 		$this->updateUserData(false);

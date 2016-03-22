@@ -120,8 +120,9 @@ class OrderController extends BaseController
 
         if ($order['user_id'] == $this->USER['id']) {
             return $this->ajaxError([
-                'error' => 'Мы обнаружили, что вы пытаетесь выполнить свой же заказ.
-                Не стоит этого делать, лучше зайдите на страницу <a href="/user/orders/">Мои заказы</a> и удалите его оттуда.',
+                'error' => 'Мы обнаружили, что вы пытаетесь выполнить свой же заказ.<br/>
+                Не стоит этого делать! Но если вы хотели удалить свой заказ, то это можно сделать на странице <a href="/user/orders/">Мои заказы</a>, либо
+                можно <a href="/user/orders/" onclick="orderist.order.deleteConfirm(\''. $orderId .'\'); event.stopPropagation(); return false;">удалить прямо сейчас</a>.',
             ]);
         }
 

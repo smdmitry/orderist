@@ -102,6 +102,9 @@ class BaseController extends Controller
 
     protected function redirect($url, $code = 303)
     {
+        if ($this->isAjax()) {
+            return $this->ajaxSuccess(['redirect' => $url]);
+        }
         return $this->response->redirect($url, true, $code)->sendHeaders();
     }
 

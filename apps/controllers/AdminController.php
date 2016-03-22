@@ -28,4 +28,9 @@ class AdminController extends BaseController
         $res = BaseMemcache::i()->mc->flush();
         $this->ajaxSuccess(['res' => $res]);
     }
+
+    public function recoverAction()
+    {
+        // Тут будет восстановление после сбоя
+    }
 }

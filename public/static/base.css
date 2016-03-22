@@ -100,3 +100,5 @@ body {
 
 .loader-img { margin: 0 10px 0 0; display: none; }
 .loading .loader-img { display: inline-block; }
+
+.h { display: none; }

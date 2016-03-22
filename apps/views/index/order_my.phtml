@@ -33,9 +33,7 @@ $expandable = mb_strlen($description) >= $descLenthLimit;
         <div class="order-buttons">
             <? if ($order['state'] == OrderDao::STATE_NEW): ?>
                 <span class="loader"></span>
-                <button type="button" onclick="orderist.popup.confirm('Вы уверены, что хотите удалить заказ?', 'Отмена', 'Удалить', function(result) {
-                            result && orderist.order.delete('<?=$order['id']?>');
-                        }); event.stopPropagation(); return false;"
+                <button type="button" onclick="orderist.order.deleteConfirm('<?=$order['id']?>'); event.stopPropagation(); return false;"
                     class="btn btn-loading btn-danger order-button">
                     Удалить заказ
                 </button>
