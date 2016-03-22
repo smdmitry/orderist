@@ -149,6 +149,8 @@ class OrderDao extends BaseDao
         $res = $this->db->update(self::TABLE_ORDERS, [
             'state' => self::STATE_EXECUTED,
             'executer_id' => $userId,
+            'user_payment_id' => 0,
+            'executer_payment_id' => 0,
             'updated' => time(),
         ], $this->db->qq("id = ? AND state = ?", [$orderId, $state]));
 
@@ -158,6 +160,11 @@ class OrderDao extends BaseDao
         }
 
         return $res;
+    }
+
+    public function _updateRaw($orderId, $data)
+    {
+        return $this->db->update(self::TABLE_ORDERS, $data, $this->db->qq('id = ?', $orderId));
     }
 
     public function delete($order)

@@ -2,16 +2,18 @@
     <? include 'orders_block.phtml' ?>
 </div>
 
-<script>
-    $(window).scroll(function() {
-        if ($(window).scrollTop() + $(window).height() >= $(document).height() - 300) {
-            orderist.order.loadMore();
-        }
-    });
+<? if (!empty($hasNext)): ?>
+    <script>
+        $(window).scroll(function() {
+            if ($(window).scrollTop() + $(window).height() >= $(document).height() - 300) {
+                orderist.order.loadMore();
+            }
+        });
 
-    $(document).ready(function() {
-        if ($(window).scrollTop() + $(window).height() >= $(document).height() - 300) {
-            orderist.order.loadMore();
-        }
-    });
-</script>
+        $(document).ready(function() {
+            if ($(window).scrollTop() + $(window).height() >= $(document).height() - 300) {
+                orderist.order.loadMore();
+            }
+        });
+    </script>
+<? endif ?>

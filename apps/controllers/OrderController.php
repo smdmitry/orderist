@@ -17,6 +17,10 @@ class OrderController extends BaseController
         $this->ajaxSuccess($data);
     }
 
+    /**
+     * TODO: Тут не предусмотрена ситуация, когда заказ создался, но деньги мы не заморозили, потому что база упала.
+     * В принципе можно забить, баланс денег не нарушится, просто юзер сможет в минус уйти
+     */
     public function createAction()
     {
         if (!$this->isAjax()) {
@@ -71,7 +75,12 @@ class OrderController extends BaseController
             $commission = ceil($price * OrderDao::COMMISSION);
             $orderId = OrderDao::i()->addOrder($userId, $title, $description, $price, $commission);
             if ($orderId) {
-                UserDao::i()->updateMoney($userId, 0, $price, $orderId); // А тут внутри юзер обновится, вместе с мемкешом
+                $updated = UserDao::i()->updateMoney($userId, 0, $price, $orderId); // А тут внутри юзер обновится, вместе с мемкешом
+                if ($updated) {
+                    OrderDao::i()->_updateRaw($orderId, [
+                        'user_payment_id' => 1,
+                    ]);
+                }
             }
 
             LockDao::i()->unlock(LockDao::USER, $userId);
@@ -136,8 +145,15 @@ class OrderController extends BaseController
 
                 if ($res) {
                     $price = $order['price'] - $order['commission'];
-                    UserDao::i()->updateMoney($order['user_id'], -$order['price'], -$order['price'], $orderId);
-                    UserDao::i()->updateMoney($this->USER['id'], $price, 0, $orderId);
+                    $userPaymentId = UserDao::i()->updateMoney($order['user_id'], -$order['price'], -$order['price'], $orderId);
+                    $executerPaymentId = UserDao::i()->updateMoney($this->USER['id'], $price, 0, $orderId);
+
+                    if ($userPaymentId && $executerPaymentId) {
+                        OrderDao::i()->_updateRaw($order['id'], [
+                            'user_payment_id' => $userPaymentId,
+                            'executer_payment_id' => $executerPaymentId,
+                        ]);
+                    }
                 }
 
                 LockDao::i()->unlock(LockDao::USER, $this->USER['id']);

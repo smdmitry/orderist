@@ -133,9 +133,9 @@ class BaseController extends Controller
         $this->baseData = array_merge($this->baseData, $data);
     }
 
-    protected function debugSleep($data)
+    protected function debugSleep()
     {
-        if (DEBUG && $this->isAjax() && empty($data['html'])) {
+        if (DEBUG && $this->isAjax()) {
             usleep(rand() % 2 ? rand(1, 1000) : rand(1000000, 3000000));
         }
     }

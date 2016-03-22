@@ -28,16 +28,18 @@
     </div>
 </div>
 
-<script>
-    $(window).scroll(function() {
-        if ($(window).scrollTop() + $(window).height() >= $(document).height() - 300) {
-            orderist.user.loadPayments();
-        }
-    });
+<? if (!empty($hasNext)): ?>
+    <script>
+        $(window).scroll(function() {
+            if ($(window).scrollTop() + $(window).height() >= $(document).height() - 300) {
+                orderist.user.loadPayments();
+            }
+        });
 
-    $(document).ready(function() {
-        if ($(window).scrollTop() + $(window).height() >= $(document).height() - 300) {
-            orderist.user.loadPayments();
-        }
-    });
-</script>
+        $(document).ready(function() {
+            if ($(window).scrollTop() + $(window).height() >= $(document).height() - 300) {
+                orderist.user.loadPayments();
+            }
+        });
+    </script>
+<? endif ?>
