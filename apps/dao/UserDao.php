@@ -156,6 +156,15 @@ class UserDao extends BaseDao
             $update['payment_id'] = $paymentId;
         }
 
+        $res = $this->_update($userId, $update);
+
+        BaseWS::i()->send($userId, ['type' => 'cash']);
+
+        return $res ? $paymentId : false;
+    }
+
+    public function _update($userId, $update)
+    {
         $res = $this->db->update(self::TABLE_USER, $update, $this->db->qq("id = ?", $userId));
         if ($res) {
             $user = $this->getById($userId, 2);
@@ -165,10 +174,7 @@ class UserDao extends BaseDao
                 $this->clearCache($userId);
             }
         }
-
-        BaseWS::i()->send($userId, ['type' => 'cash']);
-
-        return $res ? $paymentId : false;
+        return $res;
     }
 
     public function getUserPayments($userId, $limit, $lastPaymentId = 0)
@@ -206,5 +212,19 @@ class UserDao extends BaseDao
         }
 
         return $this->db->fetchAssoc($select);
+    }
+
+    public function getUserUpdateByPayments($userId)
+    {
+        $table = $this->getPaymentsTable($userId);
+        $select = $this->db->qq("SELECT SUM(amount) as cash, MAX(id) as payment_id FROM {$table} WHERE user_id = ?;", $userId);
+        return $this->db->fetchRow($select);
+    }
+
+    public function getUserOrderPayment($userId, $orderId)
+    {
+        $table = $this->getPaymentsTable($userId);
+        $select = $this->db->select()->from($table)->where('user_id = ?', $userId)->where('order_id = ?', $orderId);
+        return $this->db->fetchRow($select);
     }
 }

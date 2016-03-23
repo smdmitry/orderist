@@ -1,7 +1,8 @@
 <div class="row col-md-10 col-md-offset-1">
     <p>
         Ваш баланс: <span class="label label-info"><span class="user-cash"><?=UserDao::i()->getField($USER, 'cash')?></span> руб.</span><span class="user-cash-hold-block <?=$USER['hold'] == 0 ? 'h' : ''?>">,
-        ещё <span class="label label-default order-commission"><span class="user-hold"><?=UserDao::i()->getField($USER, 'hold')?></span> руб.</span> заблокировано.</span>
+        ещё <span class="label label-default order-commission"><span class="user-hold"><?=UserDao::i()->getField($USER, 'hold')?></span> руб.</span>
+            <span href="#" class="jsLink" data-toggle="tooltip" data-placement="bottom" title="Когда вы создаёте заказ, то деньги не списываются с вашего счета, а просто блокируются на время, пока кто-то его не выполнит. Если вы удалите активные заказы, то все деньги вернутся вам на счёт.">заблокировано<sup><b>?</b></sup></span></span>
     </p>
 
     <blockquote>

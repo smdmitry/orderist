@@ -36,7 +36,7 @@ class OrderController extends BaseController
         }
 
         $title = BaseService::i()->filterText($this->p('order_title'));
-        $description = BaseService::i()->filterText($this->p('order_description'));
+        $description = BaseService::i()->filterText($this->p('order_description'), true);
         $price = floatval($this->p('order_price'));
         $price = (int)floor($price * 100);
         $doRound = $this->p('order_round');
@@ -155,12 +155,10 @@ class OrderController extends BaseController
         if (LockDao::i()->lock(LockDao::USER, $order['user_id'])) {
             if (LockDao::i()->lock(LockDao::USER, $this->USER['id'])) {
                 $res = OrderDao::i()->execute($order, $this->USER['id']);
-
                 if ($res) {
                     $price = $order['price'] - $order['commission'];
                     $userPaymentId = UserDao::i()->updateMoney($order['user_id'], -$order['price'], -$order['price'], $orderId);
                     $executerPaymentId = UserDao::i()->updateMoney($this->USER['id'], $price, 0, $orderId);
-
                     if ($userPaymentId && $executerPaymentId) {
                         OrderDao::i()->_updateRaw($order['id'], [
                             'user_payment_id' => $userPaymentId,

@@ -31,9 +31,9 @@ class BaseService extends \Phalcon\DI\Injectable
         return str_replace('.00', '', number_format($amount / 100, 2, '.', ' '));
     }
 
-    public function filterText($str)
+    public function filterText($str, $multiline = false)
     {
-        $str = preg_replace('!\s+!', ' ', $str);
+        $str = $multiline ? preg_replace('! +!', ' ', $str) : preg_replace('!\s+!', ' ', $str);
         return htmlspecialchars(trim(strip_tags($str)));
     }
 

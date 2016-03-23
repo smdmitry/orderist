@@ -113,6 +113,10 @@ var orderist = {
                 }
             }
 
+            if (typeof response.res == 'undefined') {
+                orderist.popup.alert('Ой, что-то пошло не так! Попробуйте пожалуйста ещё раз.')
+            }
+
             return response.res;
         },
         setLoading: function(el, loading) {
@@ -487,6 +491,10 @@ var orderist = {
 };
 
 $(document).ready(function () {
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+    });
+
     var socket = io.connect('http://orderist.smdmitry.com:8080');
     socket.on('message', function (data) {
         //console.log('socket data', data);
