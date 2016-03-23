@@ -5,7 +5,10 @@ class OrderController extends BaseController
     public function createpopupAction()
     {
         if (!$this->USER) {
-            return $this->ajaxError(['error' => 'auth']);
+            return $this->ajaxError([
+                'type' => 'auth',
+                'error' => 'Для создания заказов, вам необходимо войти в свой профиль или зарегистрироваться на сайте',
+            ]);
         }
 
         $this->view->commission = OrderDao::COMMISSION;
@@ -52,7 +55,7 @@ class OrderController extends BaseController
         } elseif ($price <= 1) {
             $errors[] = 'Cлишком низкая стоимость заказа!';
         }
-        if ($price - $commission <= 0) {
+        if (empty($errors) && $price - $commission <= 0) {
             $errors[] = 'Ну нельзя же так, чтобы исполнитель ничего не получил!';
         }
         if (!empty($errors)) {
@@ -73,7 +76,7 @@ class OrderController extends BaseController
                 LockDao::i()->unlock(LockDao::USER, $userId);
                 $need = ($price - $cash) / 100;
                 return $this->ajaxError([
-                    'error' => "Ой, вам на хватает <b>{$need} руб.</b> для создания заказа!<br>Попробуйте снизить стоимость или <b><a href=\"/user/cash/\" onclick=\"orderist.order.createPopup.addCash('". (int)($need*100) ."'); return false;\">пополнить счет сейчас</a></b>.",
+                    'error' => "Ой, вам на хватает <b>{$need} руб.</b> для создания заказа!<br>Попробуйте снизить стоимость или <b><a href=\"/user/cash/\" onclick=\"orderist.order.createPopup.addCash('". (int)($need*100) ."'); return false;\">пополнить счет</a></b>.",
                 ]);
             }
 
@@ -110,7 +113,10 @@ class OrderController extends BaseController
         }
 
         if (!$this->USER) {
-            return $this->ajaxError(['error' => 'auth']);
+            return $this->ajaxError([
+                'type' => 'auth',
+                'error' => 'Для выполнения заказов, вам необходимо войти в свой профиль или зарегистрироваться на сайте',
+            ]);
         }
 
         if (!$this->checkCSRF()) {
@@ -243,5 +249,20 @@ class OrderController extends BaseController
         return $res ? $this->ajaxSuccess() : $this->ajaxError([
             'error' => 'Произошла ошибка, попробуйте ещё раз.',
         ]);
+    }
+
+    // TODO: тут кеша нет, но это редкий Action, поэтому можно и без него
+    public function orderAction()
+    {
+        $orderId = (int)$this->p('id');
+        $order = OrderDao::i()->getById($orderId);
+
+        if (!$order) {
+            $this->view->error = 'Ошибка, заказ не найден!';
+            return;
+        }
+
+        $this->view->order = reset(OrderDao::i()->prepareOrders([$order]));
+        $this->view->isMe = $this->USER && $order['user_id'] == $this->USER['id'];
     }
 }

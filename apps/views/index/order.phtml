@@ -6,10 +6,10 @@
      onclick="orderist.order.expand('<?=$order['id']?>')">
     <div class="order-price" style="text-align: right;">
         <? if ($isMy): ?>
-            <div class="order-get-text" style="margin-bottom: 10px; font-size: 12px; color: gray;">Вы заплатите:</div>
+            <div class="order-get-text" style="margin-bottom: 10px; font-size: 12px; color: gray;">Стоимость заказа:</div>
             <span class="label label-info"><?=number_format($price, 2, ',', ' ')?> р.</span>
         <? else: ?>
-            <div class="order-get-text" style="margin-bottom: 10px; font-size: 12px; color: gray;">Вы получите:</div>
+            <div class="order-get-text" style="margin-bottom: 10px; font-size: 12px; color: gray;">Вы <?=$USER && $order['executer_id'] == $USER['id'] ? 'получили' : 'получите'?>:</div>
             <span class="label label-warning"><?=number_format($price, 2, ',', ' ')?> р.</span>
         <? endif ?>
     </div>

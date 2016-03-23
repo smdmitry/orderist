@@ -6,6 +6,7 @@ class OrderDao extends BaseDao
 
     const STATE_NEW = 1;
     const STATE_EXECUTED = 2;
+    const STATE_IS_EXECUTED = 3;
 
     const COMMISSION = 0.18;
 
@@ -13,6 +14,7 @@ class OrderDao extends BaseDao
     const NEW_ORDERS_MCTIME = 60;
     const NEW_ORDERS_LIMIT = IndexController::ORDERS_PER_PAGE;
 
+    const EXECUTED_ORDERS_MCKEY = 'executed_orders:';
     const USER_ORDERS_MCKEY = 'user_orders:';
     const USER_ORDERS_MCTIME = 3600;
     const USER_ORDERS_LIMIT = IndexController::ORDERS_PER_PAGE;
@@ -97,10 +99,42 @@ class OrderDao extends BaseDao
         return $this->_getOrders($state, $userId, $limit, $lastOrderId);
     }
 
+    public function getExecuterOrders($userId, $limit = 10, $lastOrderId = 0)
+    {
+        if ($lastOrderId == 0 && $limit <= self::USER_ORDERS_LIMIT) {
+            $data = BaseMemcache::i()->get(self::EXECUTED_ORDERS_MCKEY . $userId);
+            if ($data === false) {
+                $data = $this->_getExecuterOrders($userId, self::USER_ORDERS_LIMIT);
+                BaseMemcache::i()->set(self::EXECUTED_ORDERS_MCKEY . $userId, $data, self::USER_ORDERS_MCTIME);
+            }
+            return array_slice($data, 0, $limit, true);
+        }
+
+        return $this->_getExecuterOrders($userId, $limit, $lastOrderId);
+    }
+    private function _getExecuterOrders($userId, $limit = 10, $lastOrderId = 0)
+    {
+        $limit = (int)$limit;
+
+        $select = $this->db->select()->from(self::TABLE_ORDERS)->order('id DESC')->limit($limit);
+        $select->where('executer_id = ?', $userId);
+
+        if ($lastOrderId) {
+            $select->where('id < ?', $lastOrderId);
+        }
+
+        return $this->db->fetchAssoc($select);
+    }
+
     private function clearUserOrdersCache($userId, $state)
     {
         BaseMemcache::i()->delete(self::USER_ORDERS_MCKEY . '0_' . $userId);
         return BaseMemcache::i()->delete(self::USER_ORDERS_MCKEY . $state . '_' . $userId);
+    }
+
+    private function clearExecutedOrdersCache($userId)
+    {
+        return BaseMemcache::i()->delete(self::EXECUTED_ORDERS_MCKEY . $userId);
     }
 
     protected function _getOrders($state, $userId = 0, $limit = 10, $lastOrderId = 0)
@@ -157,6 +191,7 @@ class OrderDao extends BaseDao
         if ($res) {
             $this->clearNewOrdersCache($orderId);
             $this->clearUserOrdersCache($order['user_id'], $state);
+            $this->clearExecutedOrdersCache($userId);
         }
 
         return $res;

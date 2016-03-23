@@ -5,13 +5,14 @@
             <h4 class="modal-title">Регистрация на сайте</h4>
         </div>
         <div class="modal-body">
-            <form class="form-horizontal" method="post" action="/user/signup/" onsubmit="orderist.user.signup(true); return false;">
+            <form class="form-horizontal" method="post" action="/user/signup/" onsubmit="orderist.user.signup({submit: 1}); return false;">
                 <fieldset>
                     <div class="errors-block"></div>
                     <div class="form-group">
+                        <span class="help-block input-helper">Уже зарегистрированы? Тогда <a href="/user/login/" onclick="orderist.user.login(); return false;">войдите</a> в свой профиль</span>
                         <label for="user_name" class="col-lg-2 control-label">Ваше имя</label>
                         <div class="col-lg-10">
-                            <input type="text" class="form-control" name="user_name" placeholder="">
+                            <input type="text" class="form-control" name="user_name" placeholder="Как нам к вам обращаться?">
                         </div>
                     </div>
                     <div class="form-group">

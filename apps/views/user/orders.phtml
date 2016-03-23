@@ -3,19 +3,28 @@
 </script>
 <ul class="nav nav-tabs">
     <li role="presentation" class="<?=$state === OrderDao::STATE_NEW ? 'active' : ''?>"><a href="/user/orders/?state=<?=OrderDao::STATE_NEW?>">Активные</a></li>
-    <li role="presentation" class="<?=$state === OrderDao::STATE_EXECUTED ? 'active' : ''?>"><a href="/user/orders/?state=<?=OrderDao::STATE_EXECUTED?>">Выполненные</a></li>
-    <li role="presentation" class="<?=!$state ? 'active' : ''?>"><a href="/user/orders/?state=0">Все закакзы</a></li>
+    <li role="presentation" class="<?=$state === OrderDao::STATE_EXECUTED ? 'active' : ''?>"><a href="/user/orders/?state=<?=OrderDao::STATE_EXECUTED?>">Завершённые</a></li>
+    <!--<li role="presentation" class="<?=!$state ? 'active' : ''?>"><a href="/user/orders/?state=0">Все закакзы</a></li>-->
+    <li role="presentation" style="margin-left: 20px;" class="<?=$state === OrderDao::STATE_IS_EXECUTED ? 'active' : ''?>">
+        <a href="/user/orders/?state=<?=OrderDao::STATE_IS_EXECUTED?>">Выполненные мной</a>
+    </li>
 </ul>
 
 <div id="orders-block">
     <div class="list">
         <? if (empty($orders)): ?>
-            <?
-                $stateText = !$state ? '' : ($state === OrderDao::STATE_NEW ? ' активных' : ' выполненных');
-            ?>
-            <h4>
-                У вас нет<?=$stateText?> заказов. Вы можете <a href="/order/create/" onclick="orderist.order.createPopup.open(); return false;">разместить новый заказ</a>.
-            </h4>
+            <? if (!$state || $state === OrderDao::STATE_NEW || $state === OrderDao::STATE_EXECUTED): ?>
+                <?
+                    $stateText = !$state ? '' : ($state === OrderDao::STATE_NEW ? ' активных' : ' завершённых');
+                ?>
+                <h4>
+                    У вас нет<?=$stateText?> заказов, но вы можете <a href="/order/create/" onclick="orderist.order.createPopup.open(); return false;">разместить новый заказ</a>.
+                </h4>
+            <? else: ?>
+                <h4>
+                    У вас нет выполненных заказов, но вы можете <a href="/orders/">найти себе заказ</a> прямо сейчас.
+                </h4>
+            <? endif ?>
         <? endif ?>
         <? include '../apps/views/index/orders_block.phtml' ?>
     </div>

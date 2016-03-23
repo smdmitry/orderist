@@ -4,7 +4,7 @@
         <td><?=BaseService::i()->formatMoney($payment['amount'])?></td>
         <td>
             <? if (!empty($payment['order_id'])): ?>
-                <?=$payment['amount'] < 0 ? 'Списание': 'Оплата'?> за заказ #<?=$payment['order_id']?>
+                <?=$payment['amount'] < 0 ? 'Списание': 'Оплата'?> за заказ #<a href="/order/order/?id=<?=$payment['order_id']?>"><?=$payment['order_id']?></a>
             <? else: ?>
                 <?=$payment['amount'] < 0 ? 'Вывод': 'Ввод'?> средств
             <? endif ?>

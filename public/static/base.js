@@ -54,8 +54,21 @@ var orderist = {
             }
 
             if (response.base) {
+                if (response.base.cash) {
+                    if ($('.navbar .user-cash').html() != response.base.cash) {
+                        $.each($('.user-cash'), function(i, el) {
+                            el = $(el);
+                            var size = el.data('font-size') || el.css('font-size');
+                            var toSize = (parseFloat(size) + 6) + 'px';
+                            el.data('font-size', size);
+                            el.animate({fontSize: toSize}, 200).animate({fontSize: size}, 200);
+                        });
+                    }
+                }
+
                 response.base.cash && $('.user-cash').html(response.base.cash);
                 response.base.hold && $('.user-hold').html(response.base.hold);
+
                 if (response.base.hold == '0.00') {
                     $('.user-cash-hold-block').hide();
                 } else {
@@ -63,9 +76,14 @@ var orderist = {
                 }
             }
             if (response.data) {
-                if (response.data.error && response.data.error == 'auth') {
-                    orderist.user.login();
-                    return false;
+                if (!response.res) {
+                    if (response.data.type && response.data.type == 'auth') {
+                        orderist.user.signup({text: response.data.error});
+                        return false;
+                    } else if (response.data.error && response.data.error == 'auth') {
+                        orderist.user.signup();
+                        return false;
+                    }
                 }
 
                 if (response.data.html) {
@@ -89,7 +107,7 @@ var orderist = {
                         }
                     }
 
-                    wasBlock && errorBlock.fadeTo('fast', 0.5).fadeTo('fast', 1.0);
+                    wasBlock ? errorBlock.fadeTo('fast', 0.5).fadeTo('fast', 1.0) : errorBlock.hide().slideDown('fast');
 
                     return false;
                 }
@@ -101,7 +119,7 @@ var orderist = {
             el = $(el);
             var btn = $('.btn-loading', el);
 
-            $('span.loader', el).html($('.loader-img:first').clone());
+            $('span.loader', el).hide().html($('.loader-img:first').clone()).stop().fadeIn('slow');
 
             if (loading) {
                 var wasLoading = el.hasClass('loading');
@@ -119,6 +137,15 @@ var orderist = {
 
             return true;
         },
+        setLoader: function(el, loading) {
+            if (loading) {
+                el.addClass('loading');
+                $('.loader-block', el).hide().fadeIn('slow');
+            } else {
+                el.removeClass('loading');
+                $('.loader-block', el).stop().hide();
+            }
+        }
     },
     popup: {
         instance: null,
@@ -202,13 +229,15 @@ var orderist = {
         }
     },
     user: {
-        login: function (submit) {
-            submit = submit || false;
+        login: function (params) {
+            params = params || {};
+            var submit = params.submit || false;
+            var text = params.text || '';
             var data = {};
             var block = $('#user-login-popup');
 
             if (submit) {
-                var data = orderist.core.formData($('form', block));
+                data = orderist.core.formData($('form', block));
                 data['submit'] = 1;
 
                 if (!orderist.core.setLoading(block, true)) {
@@ -219,10 +248,18 @@ var orderist = {
             orderist.core.post('/user/login/', data, function (response) {
                 submit && orderist.core.setLoading(block, false);
                 orderist.core.processResponse(response);
+                if (text) {
+                    $('.errors-block', $('#user-login-popup')).html(
+                        '<div class="alert alert-info">' + text + '</div>'
+                    );
+                }
             });
         },
-        signup: function (submit) {
-            submit = submit || false;
+        signup: function (params) {
+            params = params || {};
+            var submit = params.submit || false;
+            var text = params.text || '';
+
             var data = {};
             var block = $('#user-signup-popup');
 
@@ -238,6 +275,11 @@ var orderist = {
             orderist.core.post('/user/signup/', data, function (response) {
                 submit && orderist.core.setLoading(block, false);
                 orderist.core.processResponse(response);
+                if (text) {
+                    $('.errors-block', $('#user-signup-popup')).html(
+                        '<div class="alert alert-info">' + text + '</div>'
+                    );
+                }
             });
         },
         addCash: function(amount, callback) {
@@ -267,9 +309,11 @@ var orderist = {
 
             var lastPaymentId = reload ? 0 : $('.user-payment-block:last').data('id');
             var paymentsBlock = $('#user-payments-block');
-            paymentsBlock.addClass('loading');
+
+            orderist.core.setLoader(paymentsBlock, true);
             orderist.core.post(orderist.user.loadMoreUrl, {last_payment_id: lastPaymentId}, function (response) {
-                paymentsBlock.removeClass('loading');
+                orderist.core.setLoader(paymentsBlock, false);
+
                 if (reload) $('tbody', paymentsBlock).html('');
                 if (!response.data.has_next) orderist.user.isFinished = true;
                 orderist.user.isLoading = false;
@@ -300,7 +344,7 @@ var orderist = {
             open: function () {
                 orderist.core.post('/order/createpopup/', {}, function (response) {
                     if (orderist.core.processResponse(response) && response.data.html) {
-                        var onOpenCallback = function() {
+                        orderist.popup.onOpenCallback = function() {
                             $('#order-create-popup input[name=order_price]').bind('keyup', function () {
                                 var result = this.value.replace(/[^0-9\.]/g, '')
                                 if (result != this.value) {
@@ -334,7 +378,6 @@ var orderist = {
                                 $('#order-create-popup input[name=order_price]').trigger('input');
                             });
                         };
-                        orderist.popup.onOpenCallback = onOpenCallback;
                     }
                 });
             },
@@ -406,7 +449,7 @@ var orderist = {
                 orderist.core.setLoading(orderBlock, false);
 
                 if (orderist.core.processResponse(response)) {
-                    orderBlock.fadeOut('fast');
+                    orderBlock.slideUp('slow');
                 }
             });
         },
@@ -421,13 +464,16 @@ var orderist = {
 
             var lastOrderId = reload ? 0 : $('.order-block:last').data('id');
             var ordersBlock = $('#orders-block');
-            ordersBlock.addClass('loading');
+
+            orderist.core.setLoader(ordersBlock, true);
             orderist.core.post(orderist.order.loadMoreUrl, {last_order_id: lastOrderId}, function (response) {
+                orderist.core.setLoader(ordersBlock, false);
+
                 var listEl = $('.list', ordersBlock);
                 if (reload) listEl.html('');
                 if (!response.data.has_next) orderist.order.isFinished = true;
                 orderist.order.isLoading = false;
-                ordersBlock.removeClass('loading');
+
                 listEl.append(response.data.html);
                 orderist.order.init('all');
             });
@@ -443,7 +489,7 @@ var orderist = {
 $(document).ready(function () {
     var socket = io.connect('http://orderist.smdmitry.com:8080');
     socket.on('message', function (data) {
-        console.log('socket data', data);
+        //console.log('socket data', data);
 
         if (data.type == 'cash') {
             orderist.user.reloadCash();

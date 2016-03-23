@@ -65,6 +65,7 @@ body {
 }
 
 .order-block.disabled {
+    transition: all 0.5s ease-in-out 0s;
     opacity: 0.6;
 }
 .order-block.disabled .order-button {
@@ -128,3 +129,16 @@ body {
 .alert-danger a { text-decoration: underline; color: white; }
 .alert-danger a:hover { text-decoration: none; }
 .modal-footer .alert { text-align: left; }
+.input-helper { text-align: right; padding-right: 20px; }
+
+a { text-decoration: underline; }
+a:hover { text-decoration: none; }
+.navbar a, a.btn, li a { text-decoration: none; }
+
+.navbar-brand {
+    transition: all 0.3s ease-in-out 0s;
+    margin-right: 50px;
+}
+.navbar-brand:hover {
+    opacity: 0.8;
+}

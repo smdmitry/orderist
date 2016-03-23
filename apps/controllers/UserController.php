@@ -41,12 +41,17 @@ class UserController extends BaseController
 	}
 	protected function _prepareOrders($state, $lastOrderId = 0)
 	{
-		$orders = OrderDao::i()->getUserOrders($this->USER['id'], $state, self::ORDERS_PER_PAGE, $lastOrderId);
-		$orders = OrderDao::i()->prepareOrders($orders);
+        if ($state == OrderDao::STATE_IS_EXECUTED) {
+            $orders = OrderDao::i()->getExecuterOrders($this->USER['id'], self::ORDERS_PER_PAGE, $lastOrderId);
+            $orders = OrderDao::i()->prepareOrders($orders);
+        } else {
+            $orders = OrderDao::i()->getUserOrders($this->USER['id'], $state, self::ORDERS_PER_PAGE, $lastOrderId);
+            $orders = OrderDao::i()->prepareOrders($orders);
+        }
 
 		$this->view->state = $state;
 		$this->view->orders = $orders;
-		$this->view->isMe = true;
+		$this->view->isMe = $state == OrderDao::STATE_IS_EXECUTED ? false : true;
 		$this->view->hasNext = count($orders) >= self::ORDERS_PER_PAGE;
 
 		return $orders;
@@ -70,7 +75,7 @@ class UserController extends BaseController
 
         $lastPaymentId = (int)$this->p('last_payment_id', 0);
 		$this->_preparePayments($lastPaymentId);
-        $this->debugSleep(1);
+
         $data = [
             'html' => $this->renderView('user/payments_block'),
             'has_next' => $this->view->hasNext,
