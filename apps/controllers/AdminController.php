@@ -220,6 +220,16 @@ TRUNCATE TABLE payments_3;
 UPDATE users SET cash = 20000000, hold = 10000000, payment_id = 0, updated = inserted;
          */
 
+        /*
+         *
+         * UPDATE orders SET inserted = (1456790400 - 35*24*60*60) + id * 3000 + greatest(0,round((rand()) * 1000));
+UPDATE orders SET updated =  inserted;
+
+        UPDATE users SET inserted = (1456790400 - 40*24*60*60) + id * 3000 + greatest(0,round((rand()) * 1000));
+UPDATE users SET updated =  inserted;
+         *
+         */
+
         /**
          * UPDATE orders SET price = IF(
         ROUND((RAND() * (3-0))+0) = 0,

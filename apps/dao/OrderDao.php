@@ -8,7 +8,7 @@ class OrderDao extends BaseDao
     const STATE_EXECUTED = 2;
     const STATE_IS_EXECUTED = 3;
 
-    const COMMISSION = 0.18;
+    const COMMISSION = 0.10;
 
     const NEW_ORDERS_MCKEY = 'orders_new';
     const NEW_ORDERS_MCTIME = 60;

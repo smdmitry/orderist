@@ -153,4 +153,6 @@ a:hover { text-decoration: none; }
 }
 .jsLink { border-bottom: 1px dashed #18bc9c; color: #18bc9c; cursor: pointer; }
 .jsLink:hover { border-bottom: 0px dashed #18bc9c; }
+.jsLink.active { border-bottom: 0px dashed #18bc9c; padding: 3px; color: #15a98c; background-color: #f0f0f0; }
+.jsLink.nonactive { padding: 3px; }
 .tooltip-inner { max-width: 350px; }

@@ -37,12 +37,28 @@ class OrderController extends BaseController
 
         $title = BaseService::i()->filterText($this->p('order_title'));
         $description = BaseService::i()->filterText($this->p('order_description'), true);
-        $price = floatval($this->p('order_price'));
-        $price = (int)floor($price * 100);
-        $doRound = $this->p('order_round');
+        $orderPrice = floatval($this->p('order_price'));
+        $executerPrice = floatval($this->p('order_executer_price'));
+        $userPrice = floatval($this->p('order_user_price'));
 
+        $price = (int)floor($userPrice * 100);
         $commission = ceil($price * OrderDao::COMMISSION);
-        $commission = $doRound ? (int)(ceil($commission / 100) * 100) : $commission;
+
+        // TODO: this
+        /*$orderPayment = $this->p('order_payment');
+        $orderPrice = $this->p('order_price');
+        $executerPrice = $this->p('order_executer_price');
+        $userPrice = $this->p('order_user_price');
+
+        if ($orderPayment == 'executer') {
+            // todo
+        } else {
+            $price = (int)floor($userPrice * 100);
+            $commission = ceil($price * OrderDao::COMMISSION); //review
+        }*/
+
+        // TODO: Было бы хорошо проверить цену и комиссию, пришедшие с фронтенда, чтобы не возникло ситуации
+        // что фронт посчитал и показал юзеру одно, а мы на бэке другое
 
         $errors = [];
         if (mb_strlen($title) < 1) {
@@ -55,6 +71,10 @@ class OrderController extends BaseController
         } elseif ($price <= 1) {
             $errors[] = 'Cлишком низкая стоимость заказа!';
         }
+        // TODO: review
+        /*if ($userPrice != $orderPrice && $executerPrice != $orderPrice) {
+            $errors[] = 'Ой, мы что-то неправльно рассчитали оплату заказа, попробуйте её изменить!';
+        }*/
         if (empty($errors) && $price - $commission <= 0) {
             $errors[] = 'Ну нельзя же так, чтобы исполнитель ничего не получил!';
         }

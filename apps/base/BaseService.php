@@ -31,6 +31,18 @@ class BaseService extends \Phalcon\DI\Injectable
         return str_replace('.00', '', number_format($amount / 100, 2, '.', ' '));
     }
 
+    public function formatDate($time)
+    {
+        $names = ['', 'января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+        $monthName = $names[date('n', $time)];
+
+        if (date('Y', $time) == date('Y')) {
+            return date('d ', $time) . $monthName . date(' H:i', $time);
+        }
+
+        return date('d ', $time) . $monthName . date(' Y', $time) . ' года';
+    }
+
     public function filterText($str, $multiline = false)
     {
         $str = $multiline ? preg_replace('! +!', ' ', $str) : preg_replace('!\s+!', ' ', $str);

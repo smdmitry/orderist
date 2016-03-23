@@ -9,7 +9,7 @@ class LockDao extends \Phalcon\DI\Injectable
 
     public function lock($name, $id, $ttl = 10)
     {
-        $sleeps = [0, 100, 1000, 10000, 100000];
+        $sleeps = [0, 100, 1000, 10000, 100000]; // Будем пробовать получить лок несколько раз, конкретные таймауты опытным путем можно подобрать
         foreach ($sleeps as $sleep) {
             if ($sleep) usleep($sleep);
 

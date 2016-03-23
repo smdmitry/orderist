@@ -23,22 +23,32 @@
                     <div class="form-group">
                         <label for="order_price" class="col-lg-2 control-label">Оплата</label>
                         <div class="col-lg-10">
+                            <span class="help-block" style="margin-top: 12px;"><span class="jsLink type-order active" onclick="orderist.order.payment.init('order');">заказа</span> / <span class="jsLink type-executer nonactive" onclick="orderist.order.payment.init('executer');">исполнителю</span></span>
                             <div class="input-group">
                                 <span class="input-group-addon">Руб.</span>
                                 <input type="text" name="order_price" class="form-control" placeholder="0.00">
-                                <!--<div class="input-group-addon">
-                                    <input type="checkbox" name="order_round" class="order_round" value="1" checked="checked" /> Округлять
-                                </div>-->
                             </div>
-                            <span class="help-block">Это сумма, которую вы заплатите за выполнение заказа.</span>
-                            <div>
-                                Комиссия сайта <span class="label label-default order-commission" data-value="<?=$commission?>"><?=$commission * 100?>%</span>,
-                                исполнитель получит <span class="label label-info"><span class="executer-price">0</span> руб.</span>
+                            <div class="payment-for-block"></div>
+                            <div class="payment-for-order h">
+                                <span class="help-block">Это сумма, которую вы заплатите за выполнение заказа.</span>
+                                <div>
+                                    Комиссия сайта <span class="label label-default order-commission" data-value="<?=$commission?>"><?=$commission * 100?>%</span>,
+                                    исполнитель получит <span class="label label-info"><span class="executer-price">0</span> руб.</span>
+                                </div>
+                            </div>
+                            <div class="payment-for-executer h">
+                                <span class="help-block">Это сумма, которую получит исполнитель.</span>
+                                <div>
+                                    Комиссия сайта <span class="label label-default order-commission" data-value="<?=$commission?>"><?=$commission * 100?>%</span>,
+                                    вы заплатите <span class="label label-info"><span class="user-price">0</span> руб.</span>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <input type="submit" style="display: none;" />
+                    <input type="text" name="order_payment" class="order_payment" value="" style="display: none;"/>
                     <input type="text" name="order_executer_price" class="order_executer_price" value="0" style="display: none;"/>
+                    <input type="text" name="order_user_price" class="order_user_price" value="0" style="display: none;"/>
                 </fieldset>
             </form>
         </div>

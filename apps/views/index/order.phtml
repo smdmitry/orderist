@@ -24,7 +24,7 @@
 
     <div class="order-footer">
         <div class="order-date">
-            От: <?=$order['user']['name']?>, создан: <?=date('Y-m-d H:i:s', $order['inserted'])?>
+            Заказчик: <?=$order['user']['name']?>, <?=BaseService::i()->formatDate($order['inserted'])?>
         </div>
         <div class="order-buttons">
             <? if ($order['state'] == OrderDao::STATE_NEW): ?>
