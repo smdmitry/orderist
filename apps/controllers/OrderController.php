@@ -36,6 +36,10 @@ class OrderController extends BaseController
         $description = BaseService::i()->filterText($this->p('order_description'));
         $price = floatval($this->p('order_price'));
         $price = (int)floor($price * 100);
+        $doRound = $this->p('order_round');
+
+        $commission = ceil($price * OrderDao::COMMISSION);
+        $commission = $doRound ? (int)(ceil($commission / 100) * 100) : $commission;
 
         $errors = [];
         if (mb_strlen($title) < 1) {
@@ -47,6 +51,9 @@ class OrderController extends BaseController
             $errors[] = 'Укажите стоимость заказа!';
         } elseif ($price <= 1) {
             $errors[] = 'Cлишком низкая стоимость заказа!';
+        }
+        if ($price - $commission <= 0) {
+            $errors[] = 'Ну нельзя же так, чтобы исполнитель ничего не получил!';
         }
         if (!empty($errors)) {
             return $this->ajaxError([
@@ -70,7 +77,6 @@ class OrderController extends BaseController
                 ]);
             }
 
-            $commission = ceil($price * OrderDao::COMMISSION);
             $orderId = OrderDao::i()->addOrder($userId, $title, $description, $price, $commission);
             if ($orderId) {
                 $updated = UserDao::i()->updateMoney($userId, 0, $price, $orderId); // А тут внутри юзер обновится, вместе с мемкешом

@@ -101,6 +101,11 @@ body {
 .loader-img { margin: 0 10px 0 0; display: none; }
 .loading .loader-img { display: inline-block; }
 
+.loader-block { display: none; }
+.loading .loader-block { display: inline-block; }
+.loader-block { text-align: center; }
+.loader-block .loader-img { display: inline-block; margin: 20px 0 20px 0; }
+
 .h { display: none; }
 
 .order-block .shorten {

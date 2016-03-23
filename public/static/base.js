@@ -44,10 +44,14 @@ var orderist = {
 
             return data;
         },
-        processResponse: function(response) {
+        processResponse: function(response, params) {
+            params = params || {}
             var errorBlock = $('.errors-block:visible');
             var wasBlock = errorBlock.html();
-            errorBlock.html('');
+
+            if (!params.no_clear) {
+                errorBlock.html('');
+            }
 
             if (response.base) {
                 response.base.cash && $('.user-cash').html(response.base.cash);
@@ -119,6 +123,7 @@ var orderist = {
     popup: {
         instance: null,
         onOpen: null,
+        onOpenCallback: null,
         open: function(html) {
             if (orderist.popup.instance) {
                 orderist.popup.onOpen = function () {
@@ -141,6 +146,13 @@ var orderist = {
                 if (orderist.popup.onOpen) {
                     var onOpen = orderist.popup.onOpen;
                     orderist.popup.onOpen = null;
+                    onOpen();
+                }
+            });
+            orderist.popup.instance.on('shown.bs.modal', function (e) {
+                if (orderist.popup.onOpenCallback) {
+                    var onOpen = orderist.popup.onOpenCallback;
+                    orderist.popup.onOpenCallback = null;
                     onOpen();
                 }
             });
@@ -240,7 +252,7 @@ var orderist = {
         },
         reloadCash: function() {
             orderist.core.post('/user/getcash/', {}, function (response) {
-                orderist.core.processResponse(response);
+                orderist.core.processResponse(response, {no_clear: true});
             });
         },
         isLoading: false,
@@ -254,11 +266,14 @@ var orderist = {
             orderist.user.isLoading = true;
 
             var lastPaymentId = reload ? 0 : $('.user-payment-block:last').data('id');
+            var paymentsBlock = $('#user-payments-block');
+            paymentsBlock.addClass('loading');
             orderist.core.post(orderist.user.loadMoreUrl, {last_payment_id: lastPaymentId}, function (response) {
-                if (reload) $('#user-payments-block tbody').html('');
+                paymentsBlock.removeClass('loading');
+                if (reload) $('tbody', paymentsBlock).html('');
                 if (!response.data.has_next) orderist.user.isFinished = true;
                 orderist.user.isLoading = false;
-                response.data.html && $('#user-payments-block').show();
+                response.data.html && paymentsBlock.show();
                 $('#user-payments-block tbody').append(response.data.html);
             });
         },
@@ -285,31 +300,41 @@ var orderist = {
             open: function () {
                 orderist.core.post('/order/createpopup/', {}, function (response) {
                     if (orderist.core.processResponse(response) && response.data.html) {
-                        $('#order-create-popup input[name=order_price]').bind('keyup', function () {
-                            var result = this.value.replace(/[^0-9\.]/g, '')
-                            if (result != this.value) {
-                                this.value = result;
-                            }
-                            if (this.value) {
-                                var result = Number(this.value.toString().match(/^\d+(?:\.\d{0,2})?/));
-                                if (this.value != result) {
+                        var onOpenCallback = function() {
+                            $('#order-create-popup input[name=order_price]').bind('keyup', function () {
+                                var result = this.value.replace(/[^0-9\.]/g, '')
+                                if (result != this.value) {
                                     this.value = result;
                                 }
-                            }
-                        });
-                        $('#order-create-popup input[name=order_price]').bind('input', function () {
-                            var price = $(this).val().replace(/[^0-9\.]/g, '');
-                            var popup = $('#order-create-popup');
-                            var commission = $('.order-commission', popup).data('value');
+                                if (this.value) {
+                                    var result = Number(this.value.toString().match(/^\d+(?:\.\d{0,2})?/));
+                                    if (this.value != result) {
+                                        this.value = result;
+                                    }
+                                }
+                            });
+                            $('#order-create-popup input[name=order_price]').bind('input', function () {
+                                var price = $(this).val().replace(/[^0-9\.]/g, '');
+                                var popup = $('#order-create-popup');
+                                var commission = $('.order-commission', popup).data('value');
+                                var doRound = $('.order_round', popup).is(':checked');
 
-                            price = price * 100;
-                            var commissionPrice = Math.ceil(price * commission);
-                            var executerPrice = (price - commissionPrice) / 100;
-                            var realCommission = price == 0 ? (commission * 100) : Math.ceil(commissionPrice / price * 100);
+                                price = price * 100;
+                                var commissionPrice = Math.ceil(price * commission);
+                                if (doRound) commissionPrice = Math.ceil(commissionPrice / 100) * 100;
+                                var executerPrice = (price - commissionPrice) / 100;
+                                executerPrice = executerPrice > 0 ? executerPrice : 0
+                                var realCommission = price == 0 ? (commission * 100) : Math.ceil(commissionPrice / price * 100);
 
-                            $('.order-commission', popup).html(realCommission + '%');
-                            $('.executer-price', popup).html(parseFloat(executerPrice.toFixed(2)));
-                        });
+                                $('.order-commission', popup).html(realCommission + '%');
+                                $('.executer-price', popup).html(parseFloat(executerPrice.toFixed(2)));
+                                $('.order_executer_price', popup).val(parseFloat(executerPrice.toFixed(2)));
+                            });
+                            $('#order-create-popup input[name=order_round]').bind('change', function () {
+                                $('#order-create-popup input[name=order_price]').trigger('input');
+                            });
+                        };
+                        orderist.popup.onOpenCallback = onOpenCallback;
                     }
                 });
             },
@@ -395,16 +420,20 @@ var orderist = {
             orderist.order.isLoading = true;
 
             var lastOrderId = reload ? 0 : $('.order-block:last').data('id');
+            var ordersBlock = $('#orders-block');
+            ordersBlock.addClass('loading');
             orderist.core.post(orderist.order.loadMoreUrl, {last_order_id: lastOrderId}, function (response) {
-                if (reload) $('#orders-block').html('');
+                var listEl = $('.list', ordersBlock);
+                if (reload) listEl.html('');
                 if (!response.data.has_next) orderist.order.isFinished = true;
                 orderist.order.isLoading = false;
-                $('#orders-block').append(response.data.html);
+                ordersBlock.removeClass('loading');
+                listEl.append(response.data.html);
                 orderist.order.init('all');
             });
         },
         reload: function() {
-            if ($('#orders-block').length) {
+            if ($('#orders-block .list').length) {
                 orderist.order.loadMore(true);
             }
         }

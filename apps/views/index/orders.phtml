@@ -1,5 +1,10 @@
 <div id="orders-block">
-    <? include 'orders_block.phtml' ?>
+    <div class="list">
+        <? include 'orders_block.phtml' ?>
+    </div>
+    <div class="row col-md-10 col-md-offset-1 loader-block">
+        <img src="<?=BaseTag::path('/img/loader.gif')?>" class="loader-img" />
+    </div>
 </div>
 
 <? if (!empty($hasNext)): ?>

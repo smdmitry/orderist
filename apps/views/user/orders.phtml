@@ -8,16 +8,20 @@
 </ul>
 
 <div id="orders-block">
-    <? if (empty($orders)): ?>
-        <?
-        $stateText = !$state ? '' : ($state === OrderDao::STATE_NEW ? ' активных' : ' выполненных');
-        ?>
-        <h4>
-            У вас нет<?=$stateText?> заказов. Вы можете <a href="/order/create/" onclick="orderist.order.createPopup.open(); return false;">разместить новый заказ</a>.
-        </h4>
-    <? endif ?>
-
-    <? include '../apps/views/index/orders_block.phtml' ?>
+    <div class="list">
+        <? if (empty($orders)): ?>
+            <?
+                $stateText = !$state ? '' : ($state === OrderDao::STATE_NEW ? ' активных' : ' выполненных');
+            ?>
+            <h4>
+                У вас нет<?=$stateText?> заказов. Вы можете <a href="/order/create/" onclick="orderist.order.createPopup.open(); return false;">разместить новый заказ</a>.
+            </h4>
+        <? endif ?>
+        <? include '../apps/views/index/orders_block.phtml' ?>
+    </div>
+    <div class="row col-md-10 col-md-offset-1 loader-block">
+        <img src="<?=BaseTag::path('/img/loader.gif')?>" class="loader-img" />
+    </div>
 </div>
 
 <? if (!empty($hasNext)): ?>

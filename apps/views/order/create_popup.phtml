@@ -26,6 +26,9 @@
                             <div class="input-group">
                                 <span class="input-group-addon">Руб.</span>
                                 <input type="text" name="order_price" class="form-control" placeholder="0.00">
+                                <!--<div class="input-group-addon">
+                                    <input type="checkbox" name="order_round" class="order_round" value="1" checked="checked" /> Округлять
+                                </div>-->
                             </div>
                             <span class="help-block">Это сумма, которую вы заплатите за выполнение заказа.</span>
                             <div>
@@ -35,6 +38,7 @@
                         </div>
                     </div>
                     <input type="submit" style="display: none;" />
+                    <input type="text" name="order_executer_price" class="order_executer_price" value="0" style="display: none;"/>
                 </fieldset>
             </form>
         </div>

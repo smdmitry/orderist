@@ -70,7 +70,7 @@ class UserController extends BaseController
 
         $lastPaymentId = (int)$this->p('last_payment_id', 0);
 		$this->_preparePayments($lastPaymentId);
-
+        $this->debugSleep(1);
         $data = [
             'html' => $this->renderView('user/payments_block'),
             'has_next' => $this->view->hasNext,
@@ -101,7 +101,7 @@ class UserController extends BaseController
 		$password = $this->p('user_password', '');
 
 		if ($this->p('submit')) {
-			$this->debugSleep();
+			$this->debugSleep(1);
 
 			$password = $password ? $password : substr(md5(uniqid()), 0, 12);
 			$res = UserDao::i()->addUser($name, $email, $password);
