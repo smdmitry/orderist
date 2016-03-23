@@ -69,7 +69,7 @@ var orderist = {
                 response.base.cash && $('.user-cash').html(response.base.cash);
                 response.base.hold && $('.user-hold').html(response.base.hold);
 
-                if (response.base.hold == '0.00') {
+                if (parseFloat(response.base.hold) == 0) {
                     $('.user-cash-hold-block').hide();
                 } else {
                     $('.user-cash-hold-block').show();
@@ -333,10 +333,10 @@ var orderist = {
             $('.order-desc:not(.shorted)', where).each(function() {
                 var el = $(this);
                 var maxHeight = 165;
-                if (el.height() > maxHeight) {
+                if (el.height() > maxHeight + 100) {
                     el.parent().addClass('expandable').attr('onclick', '$(\'.shorter-link\', $(this)).click();');
                     el.addClass('shorten').css('max-height', maxHeight + 'px');
-                    el.after('<a class="shorter-link" onclick="$(this).prev().removeClass(\'shorten\').addClass(\'shorted\').css(\'max-height\', \'\'); $(this).remove(); return false;">Показать полностью</a>');
+                    el.after('<a class="shorter-link" onclick="$(this).prev().parent().removeClass(\'expandable\'); $(this).prev().removeClass(\'shorten\').addClass(\'shorted\').css(\'max-height\', \'\'); $(this).remove(); return false;">Показать полностью</a>');
                 }
             });
         },

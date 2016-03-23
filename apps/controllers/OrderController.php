@@ -64,7 +64,7 @@ class OrderController extends BaseController
             ]);
         }
 
-        $this->debugSleep();
+        //$this->debugSleep();
 
         $userId = $this->USER['id'];
         if (LockDao::i()->lock(LockDao::USER, $userId)) { // Залочим баланс юзера
@@ -147,9 +147,11 @@ class OrderController extends BaseController
             ]);
         }
 
-        $this->debugSleep();
+        //$this->debugSleep();
 
         $res = false;
+
+        // TODO: тут есть вероятность дэдлока, но он будет не вечным, а до секунды, поэтому забъем
         if (LockDao::i()->lock(LockDao::USER, $order['user_id'])) {
             if (LockDao::i()->lock(LockDao::USER, $this->USER['id'])) {
                 $res = OrderDao::i()->execute($order, $this->USER['id']);
@@ -224,7 +226,7 @@ class OrderController extends BaseController
             ]);
         }
 
-        $this->debugSleep();
+        //$this->debugSleep();
 
         $res = false;
         if (LockDao::i()->lock(LockDao::USER, $this->USER['id'])) {

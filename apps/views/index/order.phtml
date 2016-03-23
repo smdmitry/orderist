@@ -1,16 +1,16 @@
 <?
     $isMy = $USER && !empty($isMe);
-    $price = $isMy ? $order['price'] / 100 : (($order['price'] - $order['commission']) / 100);
+    $price = $isMy ? $order['price'] : ($order['price'] - $order['commission']);
 ?>
 <div id="order-<?=$order['id']?>" data-id="<?=$order['id']?>" class="row col-md-10 col-md-offset-1 order-block<?=$order['state'] != OrderDao::STATE_NEW ? ' disabled' : ''?>"
      onclick="orderist.order.expand('<?=$order['id']?>')">
     <div class="order-price" style="text-align: right;">
         <? if ($isMy): ?>
             <div class="order-get-text" style="margin-bottom: 10px; font-size: 12px; color: gray;">Стоимость заказа:</div>
-            <span class="label label-info"><?=number_format($price, 2, ',', ' ')?> р.</span>
+            <span class="label label-info"><?=BaseService::i()->formatMoney($price)?> р.</span>
         <? else: ?>
             <div class="order-get-text" style="margin-bottom: 10px; font-size: 12px; color: gray;">Вы <?=$USER && $order['executer_id'] == $USER['id'] ? 'получили' : 'получите'?>:</div>
-            <span class="label label-warning"><?=number_format($price, 2, ',', ' ')?> р.</span>
+            <span class="label label-warning"><?=BaseService::i()->formatMoney($price)?> р.</span>
         <? endif ?>
     </div>
 

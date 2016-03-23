@@ -28,7 +28,7 @@ class BaseService extends \Phalcon\DI\Injectable
 
     public function formatMoney($amount)
     {
-        return number_format($amount / 100, 2, '.', ' ');
+        return str_replace('.00', '', number_format($amount / 100, 2, '.', ' '));
     }
 
     public function filterText($str)

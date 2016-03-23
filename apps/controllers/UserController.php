@@ -106,7 +106,7 @@ class UserController extends BaseController
 		$password = $this->p('user_password', '');
 
 		if ($this->p('submit')) {
-			$this->debugSleep(1);
+			$this->debugSleep(1); // Да простит меня тестирующий, но ведь на котика-то надо посмотреть :)
 
 			$password = $password ? $password : substr(md5(uniqid()), 0, 12);
 			$res = UserDao::i()->addUser($name, $email, $password);

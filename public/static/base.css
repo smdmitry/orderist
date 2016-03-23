@@ -27,7 +27,7 @@ body {
 .order-block .order-desc {
     margin: 10px 10px 10px 0;
     min-height: 20px;
-    width: 540px;
+    max-width: 540px;
 }
 .order-block .order-desc a {
     font-size: 14px;
