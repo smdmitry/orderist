@@ -207,7 +207,7 @@ class UserController extends BaseController
 			return $this->redirect('/');
 		}
 
-		$this->updateUserData(false);
+		$this->updateUserData();
 
 		return $this->ajaxSuccess();
 	}

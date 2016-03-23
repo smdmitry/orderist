@@ -166,6 +166,8 @@ class UserDao extends BaseDao
             }
         }
 
+        BaseWS::i()->send($userId, ['type' => 'cash']);
+
         return $res ? $paymentId : false;
     }
 

@@ -8,7 +8,6 @@ class BaseWS extends \Phalcon\DI\Injectable
     public function send($userId, $data)
     {
         return BackgroundWorker::i()->addJob(function() use ($userId, $data) {
-            $userId = 0;
             $message = json_encode($data);
 
             $ch = curl_init();

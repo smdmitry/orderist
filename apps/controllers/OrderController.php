@@ -176,9 +176,10 @@ class OrderController extends BaseController
             $this->USER = UserDao::i()->getById($this->USER['id']);
             $this->updateUserData();
 
-            BaseWS::i()->send($order['user_id'], ['type' => 'order', 'action' => 'executed', 'id' => $orderId]);
             if (OrderDao::i()->needOrderSocketUpdate($order)) {
                 BaseWS::i()->send(0, ['type' => 'order', 'action' => 'executed', 'id' => $orderId]);
+            } else {
+                BaseWS::i()->send($order['user_id'], ['type' => 'order', 'action' => 'executed', 'id' => $orderId]);
             }
         }
 
@@ -240,9 +241,10 @@ class OrderController extends BaseController
             $this->USER = UserDao::i()->getById($this->USER['id']);
             $this->updateUserData();
 
-            BaseWS::i()->send($order['user_id'], ['type' => 'order', 'action' => 'deleted', 'id' => $orderId]);
             if (OrderDao::i()->needOrderSocketUpdate($order)) {
                 BaseWS::i()->send(0, ['type' => 'order', 'action' => 'deleted', 'id' => $orderId]);
+            } else {
+                BaseWS::i()->send($order['user_id'], ['type' => 'order', 'action' => 'deleted', 'id' => $orderId]);
             }
         }
 

@@ -61,7 +61,7 @@ var orderist = {
                             var size = el.data('font-size') || el.css('font-size');
                             var toSize = (parseFloat(size) + 6) + 'px';
                             el.data('font-size', size);
-                            el.animate({fontSize: toSize}, 200).animate({fontSize: size}, 200);
+                            el.stop(true, true).animate({fontSize: toSize}, 200).animate({fontSize: size}, 200);
                         });
                     }
                 }

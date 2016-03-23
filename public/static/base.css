@@ -96,7 +96,6 @@ body {
 .navbar-nav > li > a { padding-top: 15px !important; padding-bottom: 14px !important; }
 .navbar { min-height: 51px !important; height: 51px; }
 .navbar-header { height: 50px; }
-.navbar-header a { padding-top: 15px; }
 .navbar-header .navbar-toggle { margin-top: 8px; }
 
 .loader-img { margin: 0 10px 0 0; display: none; }
@@ -136,9 +135,19 @@ a:hover { text-decoration: none; }
 .navbar a, a.btn, li a { text-decoration: none; }
 
 .navbar-brand {
-    transition: all 0.3s ease-in-out 0s;
-    margin-right: 50px;
+    width: 162px;
+    height: 50px;
+    background: url('img/logo.png') no-repeat;
+    transition: opacity 0.3s ease-in-out 0s;
+    margin: -1px 30px 0 0;
+    padding: 0;
+    opacity: 0.7;
 }
+.navbar-brand img { display: none; margin-top: 9px; margin-left: 9px; }
 .navbar-brand:hover {
-    opacity: 0.8;
+    background: url('img/logo.png') no-repeat -162px 0;
+    opacity: 1;
+}
+.navbar-brand:hover img {
+    display: inline-block;
 }

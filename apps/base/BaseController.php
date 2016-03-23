@@ -113,7 +113,7 @@ class BaseController extends Controller
         return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
     }
 
-    public function updateUserData($event = true)
+    public function updateUserData()
     {
         $user = $this->USER;
         if (!empty($user)) {
@@ -124,10 +124,6 @@ class BaseController extends Controller
                 'cash' => $cash,
                 'hold' => $hold,
             ]);
-
-            if ($event) {
-                BaseWS::i()->send($user['id'], ['type' => 'cash', 'cash' => $cash, 'hold' => $hold]);
-            }
         }
     }
 
