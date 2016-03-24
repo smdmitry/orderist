@@ -16,8 +16,20 @@ class AdminController extends BaseController
     public function debugAction()
     {
         $debug = (int)$this->p('debug', 0);
-        $res = BaseService::i()->setCookie('debug', $debug, 3600);
+        $res = BaseService::i()->setCookie('debug', $debug, BaseService::TIME_YEAR);
         BaseMemcache::i()->set('admintext', $debug ? 'Отладка включена' : 'Отладка выключена', 60);
+        $this->redirect('/admin/');
+    }
+
+    public function roundingAction()
+    {
+        $rounding = (int)$this->p('enabled', 0);
+        if ($rounding) {
+            $res = BaseService::i()->deleteCookie('rounding');
+        } else {
+            $res = BaseService::i()->setCookie('rounding', 1, BaseService::TIME_YEAR);
+        }
+        BaseMemcache::i()->set('admintext', $rounding ? 'Округление включено' : 'Округление выключено', 60);
         $this->redirect('/admin/');
     }
 
@@ -212,7 +224,7 @@ class AdminController extends BaseController
          *
 DELETE FROM orders WHERE id > 1649;
 DELETE FROM users WHERE id > 10;
-UPDATE orders SET state = 1, executer_id = 0, user_payment_id = 0, executer_payment_id = 0, updated = inserted;
+UPDATE orders SET state = 1, executer_id = 0, user_payment_id = 0, executer_payment_id = 0, executed = 0, updated = inserted;
 TRUNCATE TABLE payments_0;
 TRUNCATE TABLE payments_1;
 TRUNCATE TABLE payments_2;

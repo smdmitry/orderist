@@ -43,6 +43,15 @@ class BaseService extends \Phalcon\DI\Injectable
         return date('d ', $time) . $monthName . date(' Y', $time) . ' года';
     }
 
+    public function isRoundingEnabled()
+    {
+        if (BaseService::i()->getCookie('rounding')) {
+            return false;
+        }
+
+        return true;
+    }
+
     public function filterText($str, $multiline = false)
     {
         $str = $multiline ? preg_replace('! +!', ' ', $str) : preg_replace('!\s+!', ' ', $str);

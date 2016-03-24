@@ -156,7 +156,7 @@ class BaseMemcache extends \Phalcon\DI\Injectable
     {
         $time = microtime(true);
 
-        //if (isset($this->cacheDelete[$key]) && ($time - $this->cachedDelTS[$key] < $this->CACHED_TTL)) return true;
+        //if (isset($this->cacheDelete[$key]) && ($time - $this->cachedDelTS[$key] < $this->CACHED_TTL)) return true; // Если хотим удалить 2 раза, пусть удаляется
         $result = $this->_delete($key);
 
         // удаляем из статического кеша

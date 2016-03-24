@@ -7,18 +7,18 @@ class OrderDao extends BaseDao
     const STATE_NEW = 1;
     const STATE_EXECUTED = 2;
     const STATE_DELETED = 3;
-    const FAKE_STATE_IS_EXECUTED = 3;
+    const FAKE_STATE_EXECUTER = 3;
 
     const COMMISSION = 0.10;
+    const CTHRESHOLD = 0.2;
 
+    const CACHE_ORDERS_LIMIT = IndexController::ORDERS_PER_PAGE;
     const NEW_ORDERS_MCKEY = 'orders_new';
     const NEW_ORDERS_MCTIME = 60;
-    const NEW_ORDERS_LIMIT = IndexController::ORDERS_PER_PAGE;
 
-    const EXECUTED_ORDERS_MCKEY = 'executed_orders:';
+    const EXECUTER_ORDERS_MCKEY = 'executed_orders:';
     const USER_ORDERS_MCKEY = 'user_orders:';
-    const USER_ORDERS_MCTIME = 3600;
-    const USER_ORDERS_LIMIT = IndexController::ORDERS_PER_PAGE;
+    const USER_ORDERS_MCTIME = BaseService::TIME_HOUR;
 
     public function getById($id)
     {
@@ -46,132 +46,73 @@ class OrderDao extends BaseDao
             $orders = [$orders];
         }
 
-        $userIds = array_column($orders, 'user_id');
-        $userIds = array_unique($userIds);
+        $userIds = [];
+        foreach ($orders as $k => $record) {
+            $userIds[$record['user_id']] = $record['user_id'];
+            if ($record['state'] == self::STATE_EXECUTED) {
+                $userIds[$record['executer_id']] = $record['executer_id'];
+            }
+        }
+
         $users = UserDao::i()->getByIds($userIds);
 
         foreach ($orders as $k => $record) {
             $orders[$k]['user'] = $users[$record['user_id']];
             $orders[$k]['description'] = str_replace(["\r", "\n"], ['', '<br>'], $orders[$k]['description']);
+
+            if (!empty($record['executer_id']) && !empty($users[$record['executer_id']])) {
+                $orders[$k]['executer'] = $users[$record['executer_id']];
+            }
         }
 
         return $orders;
     }
 
-    public function getNewOrders($limit = 10, $lastOrderId = 0)
+    public function getOrders($filter, $sort, $limit = 10, $offset = 0, $sortId = 0)
     {
-        $state = self::STATE_NEW;
-        if ($lastOrderId == 0 && $limit <= self::NEW_ORDERS_LIMIT) {
-            $data = BaseMemcache::i()->get(self::NEW_ORDERS_MCKEY);
-            if ($data === false) {
-                $data = $this->_getOrdersSortId($state, 0, self::NEW_ORDERS_LIMIT, $lastOrderId);
-                BaseMemcache::i()->set(self::NEW_ORDERS_MCKEY, $data, self::NEW_ORDERS_MCTIME);
+        if (!$sortId && !$offset && $limit <= self::CACHE_ORDERS_LIMIT) {
+            if (!empty($filter['state']) && empty($filter['user_id']) && empty($filter['executer_id']) && $filter['state'] == self::STATE_NEW) {
+                $mckey = self::NEW_ORDERS_MCKEY;
+                $mctime = self::NEW_ORDERS_MCTIME;
+            } else if (!empty($filter['user_id'])) {
+                $state = !empty($filter['state']) ? $filter['state'] : 0;
+                $mckey = self::USER_ORDERS_MCKEY . $state . '_' . $filter['user_id'];
+                $mctime = self::USER_ORDERS_MCTIME;
+            } else if (!empty($filter['executer_id']) && !empty($filter['state']) && $filter['state'] == self::STATE_EXECUTED) {
+                $mckey = self::EXECUTER_ORDERS_MCKEY . $filter['executer_id'];
+                $mctime = self::USER_ORDERS_MCTIME;
             }
-            return array_slice($data, 0, $limit, true);
-        }
 
-        return $this->_getOrdersSortId($state, 0, $limit, $lastOrderId);
-    }
-
-    private function clearNewOrdersCache($orderId = 0)
-    {
-        if (!$orderId) {
-            return BaseMemcache::i()->delete(self::NEW_ORDERS_MCKEY);
-        }
-
-        $data = BaseMemcache::i()->get(self::NEW_ORDERS_MCKEY);
-        if (!empty($data[$orderId])) {
-            return $this->clearNewOrdersCache();
-        }
-
-        return false;
-    }
-
-    public function getUserOrders($userId, $state, $limit = 10, $offset = 0, $lastOrderId = 0, $firstTime = 0)
-    {
-        if (!$lastOrderId && !$firstTime && $limit <= self::USER_ORDERS_LIMIT) {
-            $data = BaseMemcache::i()->get(self::USER_ORDERS_MCKEY . $state . '_' . $userId);
-            if ($data === false) {
-                $data = $this->_getOrdersSortId($state, $userId, self::USER_ORDERS_LIMIT);
-                BaseMemcache::i()->set(self::USER_ORDERS_MCKEY . $state . '_' . $userId, $data, self::USER_ORDERS_MCTIME);
+            if (!empty($mckey) && !empty($mctime)) {
+                $data = BaseMemcache::i()->get($mckey);
+                if ($data === false) {
+                    $data = $this->_getOrders($filter, $sort, self::CACHE_ORDERS_LIMIT);
+                    BaseMemcache::i()->set($mckey, $data, $mctime);
+                }
+                return array_slice($data, 0, $limit, true);
             }
-            return array_slice($data, 0, $limit, true);
         }
 
-        return $this->_getOrdersSortId($state, $userId, $limit, $offset, $lastOrderId);
+        return $this->_getOrders($filter, $sort, $limit, $offset, $sortId);
     }
-
-    public function getExecuterOrders($userId, $limit = 10, $offset = 0, $lastOrderId = 0, $firstTime = 0)
-    {
-        if (!$lastOrderId && !$firstTime && $limit <= self::USER_ORDERS_LIMIT) {
-            $data = BaseMemcache::i()->get(self::EXECUTED_ORDERS_MCKEY . $userId);
-            if ($data === false) {
-                $data = $this->_getExecuterOrders($userId, self::USER_ORDERS_LIMIT);
-                BaseMemcache::i()->set(self::EXECUTED_ORDERS_MCKEY . $userId, $data, self::USER_ORDERS_MCTIME);
-            }
-            return array_slice($data, 0, $limit, true);
-        }
-
-        return $this->_getExecuterOrders($userId, $limit, $offset, $lastOrderId, $firstTime);
-    }
-    private function _getExecuterOrders($userId, $limit = 10, $offset = 0, $lastOrderId = 0, $firstTime = 0)
+    protected function _getOrders($filter, $sort, $limit = 10, $offset = 0, $sortId = 0)
     {
         $limit = (int)$limit;
 
-        $select = $this->db->select()->from(self::TABLE_ORDERS)->order('executed DESC')->limit($limit, $offset);
-        $select->where('executer_id = ?', (int)$userId);
-
-        if ($firstTime) {
-            $select->where('executed <= ?', $firstTime);
+        $select = $this->db->select()->from(self::TABLE_ORDERS)->order($sort[0] . ' ' . $sort[1])->limit($limit, $offset);
+        if (isset($filter['user_id'])) {
+            $select->where('user_id = ?', (int)$filter['user_id']);
+        }
+        if (isset($filter['executer_id'])) {
+            $select->where('executer_id = ?', (int)$filter['executer_id']);
+        }
+        if (isset($filter['state'])) {
+            $select->where('state = ?', $filter['state']);
         }
 
-        return $this->db->fetchAssoc($select);
-    }
-
-    private function clearUserOrdersCache($userId, $state)
-    {
-        BaseMemcache::i()->delete(self::USER_ORDERS_MCKEY . '0_' . $userId);
-        return BaseMemcache::i()->delete(self::USER_ORDERS_MCKEY . $state . '_' . $userId);
-    }
-
-    private function clearExecutedOrdersCache($userId)
-    {
-        return BaseMemcache::i()->delete(self::EXECUTED_ORDERS_MCKEY . $userId);
-    }
-
-    protected function _getOrdersSortId($state, $userId = 0, $limit = 10, $lastOrderId = 0)
-    {
-        $limit = (int)$limit;
-        $state = (int)$state;
-
-        $select = $this->db->select()->from(self::TABLE_ORDERS)->order('id DESC')->limit($limit);
-        if ($state) {
-            $select->where('state = ?', $state);
-        }
-        if ($userId) {
-            $select->where('user_id = ?', (int)$userId);
-        }
-        if ($lastOrderId) {
-            $select->where('id < ?', $lastOrderId);
-        }
-
-        return $this->db->fetchAssoc($select);
-    }
-
-    protected function _getOrdersSortExecuted($state, $userId = 0, $limit = 10, $offset = 0, $lastOrderId = 0)
-    {
-        $limit = (int)$limit;
-        $state = (int)$state;
-
-        $select = $this->db->select()->from(self::TABLE_ORDERS)->order('id DESC')->limit($limit);
-        if ($state) {
-            $select->where('state = ?', $state);
-        }
-        if ($userId) {
-            $select->where('user_id = ?', (int)$userId);
-        }
-        if ($lastOrderId) {
-            $select->where('id < ?', $lastOrderId);
+        if ($sortId) {
+            $type = $sort[0] == 'executed' ? ' <= ' : ' < ';
+            $select->where($sort[0] . $type . '?', $sortId);
         }
 
         return $this->db->fetchAssoc($select);
@@ -207,12 +148,13 @@ class OrderDao extends BaseDao
             'user_payment_id' => 0,
             'executer_payment_id' => 0,
             'updated' => time(),
+            'executed' => time(),
         ], $this->db->qq("id = ? AND state = ?", [$orderId, $state]));
 
         if ($res) {
             $this->clearNewOrdersCache($orderId);
-            $this->clearUserOrdersCache($order['user_id'], $state);
-            $this->clearExecutedOrdersCache($userId);
+            $this->clearUserOrdersCache($order['user_id']);
+            $this->clearExecuterOrdersCache($userId);
         }
 
         return $res;
@@ -250,5 +192,39 @@ class OrderDao extends BaseDao
             BaseMemcache::i()->set('order_new_min', $minOrderId, 5*60);
         }
         return $order['id'] >= $minOrderId;
+    }
+
+    private function clearNewOrdersCache($orderId = 0)
+    {
+        if (!$orderId) {
+            return BaseMemcache::i()->delete(self::NEW_ORDERS_MCKEY);
+        }
+
+        $data = BaseMemcache::i()->get(self::NEW_ORDERS_MCKEY);
+        if (!empty($data[$orderId])) {
+            return $this->clearNewOrdersCache();
+        }
+
+        return false;
+    }
+
+    private function clearUserOrdersCache($userId, $state = 0)
+    {
+        $res = BaseMemcache::i()->delete(self::USER_ORDERS_MCKEY . '0_' . $userId);
+
+        if ($state) {
+            return BaseMemcache::i()->delete(self::USER_ORDERS_MCKEY . $state . '_' . $userId);
+        }
+
+
+        BaseMemcache::i()->delete(self::USER_ORDERS_MCKEY . self::STATE_NEW . '_' . $userId);
+        BaseMemcache::i()->delete(self::USER_ORDERS_MCKEY . self::STATE_EXECUTED . '_' . $userId);
+
+        return $res;
+    }
+
+    private function clearExecuterOrdersCache($userId)
+    {
+        return BaseMemcache::i()->delete(self::EXECUTER_ORDERS_MCKEY . $userId);
     }
 }

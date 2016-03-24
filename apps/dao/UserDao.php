@@ -7,10 +7,10 @@ class UserDao extends BaseDao
     const TABLE_PAYMENTS_SHARDS = 4;
 
     const MC_KEY = 'user:';
-    const MC_TIME = 86400; // 24 часа
+    const MC_TIME = BaseService::TIME_DAY;
 
     const NEW_PAYMENTS_MCKEY = 'payments:';
-    const NEW_PAYMENTS_MCTIME = 86400;
+    const NEW_PAYMENTS_MCTIME = BaseService::TIME_DAY;
     const NEW_PAYMENTS_LIMIT = UserController::PAYMENTS_PER_PAGE;
 
     private function getPaymentsTable($userId)

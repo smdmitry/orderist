@@ -1,11 +1,17 @@
 <div id="orders-block">
     <div class="list">
-        <? include 'orders_block.phtml' ?>
+        <? include '../apps/views/order/blocks/orders.phtml' ?>
     </div>
     <div class="row col-md-10 col-md-offset-1 loader-block">
         <img src="<?=BaseTag::path('/img/loader.gif')?>" class="loader-img" />
     </div>
 </div>
+
+<script>
+    orderist.order.loadMoreUrl = '/index/orders/';
+    orderist.order.offset = '<?=$nextOffset?>';
+    orderist.order.isFinished = <?=empty($hasNext) ? 'true' : 'false'?>;
+</script>
 
 <? if (!empty($hasNext)): ?>
     <script>

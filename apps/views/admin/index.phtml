@@ -1,8 +1,24 @@
 <? if ($text): ?>
     <div class="alert alert-info"><?=$text?></div>
 <? endif ?>
-<a href="/admin/debug/?debug=1">Включить отладку</a><br>
-<a href="/admin/debug/?debug=0">Выключить отладку</a><br>
+
+<? if (BaseService::i()->isRoundingEnabled()): ?>
+    <a href="/admin/rounding/?enabled=0">Выключить округления</a><br>
+<? else :?>
+    <a href="/admin/rounding/?enabled=1">Включить округления</a><br>
+<? endif ?>
+
+<? if (BaseService::i()->getCookie('debug')): ?>
+    <a href="/admin/debug/?debug=0">Выключить отладку</a><br>
+<? else :?>
+    <a href="/admin/debug/?debug=1">Включить отладку</a><br>
+<? endif ?>
+
+<br/>
+
 <a href="/admin/clearmemcache/">Очистить Memcache</a><br>
 <a href="/admin/recover/">Проверить целостность данных</a><br>
+
+<br/><br/>
+
 <a target="_blank" href="/adminer.php">Администрирование MySQL</a> (Логин/Пароль: readonly)<br>

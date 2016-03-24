@@ -2,6 +2,28 @@
 
 class OrderController extends BaseController
 {
+    // TODO: тут кеша нет, но это редкий Action, поэтому можно и без него
+    public function orderAction()
+    {
+        $orderId = (int)$this->p('id');
+        $order = OrderDao::i()->getById($orderId);
+        $userId = $this->USER ? $this->USER['id'] : 0;
+
+        if (!$order) {
+            $this->view->error = 'Ошибка, заказ не найден!';
+            return;
+        }
+
+        $canView = $userId && ($order['user_id'] == $userId || $order['executer_id'] == $userId);
+        if ($order['state'] != OrderDao::STATE_NEW && !$canView) {
+            $this->view->error = 'Ошибка, у вас нет доступа к этому заказу!';
+            return;
+        }
+
+        $this->view->order = reset(OrderDao::i()->prepareOrders([$order]));
+        $this->view->isMe = $this->USER && $order['user_id'] == $this->USER['id'];
+    }
+
     public function createpopupAction()
     {
         if (!$this->USER) {
@@ -13,8 +35,14 @@ class OrderController extends BaseController
 
         $this->view->commission = OrderDao::COMMISSION;
 
+        if (BaseService::i()->isRoundingEnabled()) {
+            $this->view->cthreshold = OrderDao::CTHRESHOLD;
+        } else {
+            $this->view->cthreshold = 0;
+        }
+
         $data = [
-            'html' => $this->renderView('order/create_popup'),
+            'html' => $this->renderView('order/popups/create'),
         ];
 
         $this->ajaxSuccess($data);
@@ -53,6 +81,20 @@ class OrderController extends BaseController
         $commission = (int)ceil($price * OrderDao::COMMISSION);
         $executer = $price - $commission;
 
+        if (BaseService::i()->isRoundingEnabled()) {
+            $cmul = $commission / $price; // Комиссия, рассчитанная точно
+
+            // Мы просто поверим тому, что пришло от фронта, если наша комиссия вписывается в пределы
+            $price = (int)round($userPrice * 100, 0);
+            $executer = (int)round($executerPrice * 100, 0);
+            $commission = $price - $executer;
+
+            $mul = $commission / $price;
+            if (abs($cmul - $mul) > OrderDao::CTHRESHOLD || $mul > $cmul) { // Сравним с точной комиссией
+                $thresholdError = true;
+            }
+        }
+
         $errors = [];
         if (mb_strlen($title) < 1) {
             $errors[] = 'Введите заголовок заказа!';
@@ -61,14 +103,15 @@ class OrderController extends BaseController
         }
         if ($price == 0) {
             $errors[] = 'Укажите стоимость заказа!';
-        } elseif ($price <= 1) {
+        } elseif ($price <= 1 || $commission <= 0) {
             $errors[] = 'Cлишком низкая стоимость заказа!';
         }
         if (empty($errors) && $price - $commission <= 0) {
             $errors[] = 'Ну нельзя же так, чтобы исполнитель ничего не получил!';
         }
-        if ($price != (int)round($userPrice * 100, 0) || $executer != (int)round($executerPrice * 100, 0)) {
+        if ($price != (int)round($userPrice * 100, 0) || $executer != (int)round($executerPrice * 100, 0) || !empty($thresholdError)) {
             $errors[] = 'Ой, что-то мы не так рассчитали вам оплату заказа. Это наш косяк, просто попробуйте указать другую сумму.';
+            // Сюда мы не должны попадать при нормальной работе и надо бы залогировать ошибку
         }
         if (!empty($errors)) {
             return $this->ajaxError([
@@ -99,7 +142,11 @@ class OrderController extends BaseController
                     OrderDao::i()->_updateRaw($orderId, [
                         'user_payment_id' => 1,
                     ]);
+                } else {
+                    // Сюда мы не должны попадать при нормальной работе и надо бы залогировать ошибку и потом смотреть что произошло и обновить баланс юзера
                 }
+            } else {
+                // Сюда мы не должны попадать при нормальной работе и надо бы залогировать ошибку
             }
 
             LockDao::i()->unlock(LockDao::USER, $userId);
@@ -176,7 +223,11 @@ class OrderController extends BaseController
                             'user_payment_id' => $userPaymentId,
                             'executer_payment_id' => $executerPaymentId,
                         ]);
+                    } else {
+                        // Сюда мы не должны попадать при нормальной работе и надо бы залогировать ошибку и потом смотреть что произошло и обновить баланс юзера
                     }
+                } else {
+                    // Сюда мы не должны попадать при нормальной работе и надо бы залогировать ошибку
                 }
 
                 LockDao::i()->unlock(LockDao::USER, $this->USER['id']);
@@ -243,7 +294,9 @@ class OrderController extends BaseController
             $res = OrderDao::i()->delete($order, $this->USER['id']);
 
             if ($res) {
-                UserDao::i()->updateMoney($this->USER['id'], 0, -$order['price'], $orderId);
+                if (!UserDao::i()->updateMoney($this->USER['id'], 0, -$order['price'], $orderId)) {
+                    // Сюда мы не должны попадать при нормальной работе и надо бы залогировать ошибку и потом смотреть что произошло и обновить баланс юзера
+                }
             }
 
             LockDao::i()->unlock(LockDao::USER, $this->USER['id']);
@@ -263,20 +316,5 @@ class OrderController extends BaseController
         return $res ? $this->ajaxSuccess() : $this->ajaxError([
             'error' => 'Произошла ошибка, попробуйте ещё раз.',
         ]);
-    }
-
-    // TODO: тут кеша нет, но это редкий Action, поэтому можно и без него
-    public function orderAction()
-    {
-        $orderId = (int)$this->p('id');
-        $order = OrderDao::i()->getById($orderId);
-
-        if (!$order) {
-            $this->view->error = 'Ошибка, заказ не найден!';
-            return;
-        }
-
-        $this->view->order = reset(OrderDao::i()->prepareOrders([$order]));
-        $this->view->isMe = $this->USER && $order['user_id'] == $this->USER['id'];
     }
 }

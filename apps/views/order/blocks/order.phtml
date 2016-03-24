@@ -24,7 +24,12 @@
 
     <div class="order-footer">
         <div class="order-date">
+            <div>
             Заказчик: <?=$order['user']['name']?>, <?=BaseService::i()->formatDate($order['inserted'])?>
+            <? if (!empty($order['executer'])): ?>
+                <br>Выполнил: <?=$order['executer']['name']?>, <?=BaseService::i()->formatDate($order['executed'])?>
+            <? endif ?>
+            </div>
         </div>
         <div class="order-buttons">
             <? if ($order['state'] == OrderDao::STATE_NEW): ?>

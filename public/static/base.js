@@ -284,7 +284,7 @@ var orderist = {
         },
         isLoading: false,
         isFinished: false,
-        loadMoreUrl: '/user/getpaymentspage/',
+        loadMoreUrl: '/user/cash/',
         loadPayments: function(reload) {
             reload = reload || false;
             if (reload) orderist.user.isFinished = false;
@@ -355,9 +355,15 @@ var orderist = {
                 if (el.height() > maxHeight + 100) {
                     el.parent().addClass('expandable').attr('onclick', '$(\'.shorter-link\', $(this)).click();');
                     el.addClass('shorten').css('max-height', maxHeight + 'px');
-                    el.after('<a class="shorter-link" onclick="$(this).prev().parent().removeClass(\'expandable\'); $(this).prev().removeClass(\'shorten\').addClass(\'shorted\').css(\'max-height\', \'\'); $(this).remove(); return false;">Показать полностью</a>');
+                    el.after('<a class="shorter-link" onclick="orderist.order.expand(\''+id+'\'); return false;">Показать полностью</a>');
                 }
             });
+        },
+        expand: function(id) {
+            var orderBlock = $('#order-'+id);
+            orderBlock.removeClass('expandable');
+            $('.order-desc', orderBlock).removeClass('shorten').addClass('shorted').css('max-height', '');
+            $('.shorter-link', orderBlock).remove();
         },
         payment: {
             type: 'order',
@@ -385,13 +391,39 @@ var orderist = {
                     orderist.order.payment.calculate();
                 }
             },
-            _calc: function(price, cmul, type) {
+            _calc: function(price, cmul, type, cthreshold) {
                 price = Math.round(price * 100);
+                var orig = price;
+
                 if (type == 'executer') {
                     price = Math.ceil(price / (1 - cmul));
                 }
 
                 var commission = Math.ceil(price * cmul);
+
+                if (cthreshold) {
+                    var scales = [100000, 50000, 10000, 5000, 1000, 500, 100, 50, 10, 5];
+                    var threshold = cmul * cthreshold;
+
+                    for (var i = 0; i < scales.length; i++) {
+                        var newprice = price;
+                        var newcomm = commission;
+
+                        if (type == 'executer') {
+                            newprice = Math.floor(price / scales[i]) * scales[i];
+                            newcomm = newprice - orig;
+                        } else {
+                            newcomm = Math.floor(commission / scales[i]) * scales[i];
+                        }
+
+                        var newcmul = newcomm / newprice;
+                        if (Math.abs(cmul - newcmul) <= threshold && newcmul <= cmul) {
+                            price = newprice;
+                            commission = newcomm;
+                            break;
+                        }
+                    }
+                }
 
                 return {price: price, commission: commission, executer: price - commission};
             },
@@ -401,11 +433,19 @@ var orderist = {
                 var input = $('#order-create-popup input[name=order_price]');
 
                 var cmul = $('.order-commission', popup).data('value');
+                var cthreshold = $('input[name=order_cthreshold]', popup).val();
+
                 var price = input.val().replace(/[^0-9\.]/g, '');
                 price = Number(price.match(/^\d+(?:\.\d{0,2})?/));
 
-                var data = orderist.order.payment._calc(price, cmul, type);
+                var data = orderist.order.payment._calc(price, cmul, type, cthreshold);
                 var realCommission = data.price == 0 ? (cmul * 100) : Math.round(data.commission / data.price * 100);
+                if (cthreshold) { // Не будем показывать юзеру меньшую комиссию, если она в допустимых пределах
+                    var newcmul = data.commission / data.price;
+                    if (Math.abs(cmul - newcmul) <= cthreshold && newcmul <= cmul) {
+                        realCommission = cmul * 100;
+                    }
+                }
 
                 var priceText = parseFloat((data.price / 100).toFixed(2));
                 var executerPriceText = parseFloat((data.executer / 100).toFixed(2));
@@ -546,7 +586,7 @@ var orderist = {
         offset: 0,
         isLoading: false,
         isFinished: false,
-        loadMoreUrl: '/index/getpage/',
+        loadMoreUrl: '/index/orders/',
         loadMore: function(reload) {
             if (reload)  {
                 orderist.order.offset = 0;
@@ -607,7 +647,7 @@ $(document).ready(function () {
                 $('button', block).html('Заказ удалён');
                 $('button', block).removeAttr('onclick');
             } else if (data.action == 'created') {
-                // add new orders block
+                // TODO: Add new orders block
             }
         }
     });

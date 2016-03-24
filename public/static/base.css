@@ -58,7 +58,13 @@ body {
     font-size: 12px;
     color: gray;
     float: left;
-    padding-top: 25px;
+    height: 45px;
+    position: relative;
+}
+.order-block .order-footer .order-date div {
+    position: absolute;
+    bottom: 0;
+    width: 500px;
 }
 .order-block .order-buttons {
     float: right;

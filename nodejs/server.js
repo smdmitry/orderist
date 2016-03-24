@@ -1,7 +1,7 @@
 var requestify = require('requestify');
 var express = require('express');
 var http = require('http');
-var bodyParser = require('body-parser')
+var bodyParser = require('body-parser');
 
 var app = express();
 var server = http.createServer(app);

@@ -16,46 +16,43 @@ class UserController extends BaseController
             return $this->redirect('/');
         }
 
-		$state = (int)$this->p('state', OrderDao::STATE_NEW);
-		$this->_prepareOrders($state);
-
 		$this->view->navTab = self::TAB_MY_ORDERS;
-	}
-	public function getorderspageAction()
-	{
-        if (!$this->USER) {
-			return $this->redirect('/');
-        }
 
+		$state = (int)$this->p('state', OrderDao::STATE_NEW);
 		$lastOrderId = (int)$this->p('last_order_id', 0);
-        $firstTime = (int)$this->p('first_time', 0);
-		$state = (int)$this->p('state', 0);
-        $offset = (int)$this->p('offset', 0);
+		$firstTime = (int)$this->p('first_time', 0);
+		$offset = (int)$this->p('offset', 0);
 
 		$this->_prepareOrders($state, $offset, $lastOrderId, $firstTime);
 
-		$data = [
-			'html' => $this->renderView('index/orders_block'),
-			'has_next' => $this->view->hasNext,
-            'next_offset' => $offset + count($this->view->orders)
-		];
+		if ($this->isAjax()) {
+			$data = [
+				'html' => $this->renderView('order/blocks/orders'),
+				'has_next' => $this->view->hasNext,
+				'next_offset' => $this->view->nextOffset,
+			];
 
-		$this->ajaxSuccess($data);
+			$this->ajaxSuccess($data);
+		}
 	}
 	protected function _prepareOrders($state, $offset = 0, $lastOrderId = 0, $firstTime = 0)
 	{
-        if ($state == OrderDao::FAKE_STATE_IS_EXECUTED) {
-            $orders = OrderDao::i()->getExecuterOrders($this->USER['id'], self::ORDERS_PER_PAGE, $offset, $lastOrderId, $firstTime);
-            $orders = OrderDao::i()->prepareOrders($orders);
-        } else {
-            $orders = OrderDao::i()->getUserOrders($this->USER['id'], $state, self::ORDERS_PER_PAGE, $offset, $lastOrderId, $firstTime);
-            $orders = OrderDao::i()->prepareOrders($orders);
-        }
+		if (!$state) {
+			$orders = OrderDao::i()->getOrders(['user_id' => $this->USER['id']], ['id', 'DESC'], self::ORDERS_PER_PAGE, 0, $lastOrderId);
+		} elseif ($state == OrderDao::STATE_NEW) {
+			$orders = OrderDao::i()->getOrders(['user_id' => $this->USER['id'], 'state' => OrderDao::STATE_NEW], ['id', 'DESC'], self::ORDERS_PER_PAGE, 0, $lastOrderId);
+        } else if ($state == OrderDao::STATE_EXECUTED) {
+			$orders = OrderDao::i()->getOrders(['user_id' => $this->USER['id'], 'state' => OrderDao::STATE_EXECUTED], ['executed', 'DESC'], self::ORDERS_PER_PAGE, $offset, $firstTime);
+        } else if ($state == OrderDao::FAKE_STATE_EXECUTER) {
+			$orders = OrderDao::i()->getOrders(['executer_id' => $this->USER['id'], 'state' => OrderDao::STATE_EXECUTED], ['executed', 'DESC'], self::ORDERS_PER_PAGE, $offset, $firstTime);
+		}
+		$orders = OrderDao::i()->prepareOrders($orders);
 
 		$this->view->state = $state;
 		$this->view->orders = $orders;
-		$this->view->isMe = $state == OrderDao::FAKE_STATE_IS_EXECUTED ? false : true;
+		$this->view->isMe = $state == OrderDao::FAKE_STATE_EXECUTER ? false : true;
 		$this->view->hasNext = count($orders) >= self::ORDERS_PER_PAGE;
+		$this->view->nextOffset = (int)$this->p('offset', 0) + count($orders);
 
 		return $orders;
 	}
@@ -66,31 +63,26 @@ class UserController extends BaseController
             return $this->redirect('/');
         }
 
-		$this->_preparePayments();
 		$this->view->navTab = self::TAB_CASH;
-        $this->view->payments = UserDao::i()->getUserPayments($this->USER['id'], self::PAYMENTS_PER_PAGE);
+
+		$this->_preparePayments((int)$this->p('last_payment_id', 0));
+
+		if ($this->isAjax()) {
+			$data = [
+				'html' => $this->renderView('user/blocks/payments'),
+				'has_next' => $this->view->hasNext,
+				'next_offset' => $this->view->nextOffset,
+			];
+
+			$this->ajaxSuccess($data);
+		}
 	}
-    public function getpaymentspageAction()
-    {
-        if (!$this->USER) {
-			return $this->redirect('/');
-        }
-
-        $lastPaymentId = (int)$this->p('last_payment_id', 0);
-		$this->_preparePayments($lastPaymentId);
-
-        $data = [
-            'html' => $this->renderView('user/payments_block'),
-            'has_next' => $this->view->hasNext,
-        ];
-
-        $this->ajaxSuccess($data);
-    }
 	protected function _preparePayments($lastPaymentId = 0)
 	{
 		$payments = UserDao::i()->getUserPayments($this->USER['id'], self::PAYMENTS_PER_PAGE, $lastPaymentId);
 		$this->view->payments = $payments;
 		$this->view->hasNext = count($payments) >= self::PAYMENTS_PER_PAGE;
+		$this->view->nextOffset = (int)$this->p('offset', 0) + count($payments);
 		return $payments;
 	}
 
@@ -129,7 +121,7 @@ class UserController extends BaseController
 		}
 
 		$data = [
-			'html' => $this->renderView('user/singup_popup'),
+			'html' => $this->renderView('user/popups/signup'),
 		];
 
 		return $this->ajaxSuccess($data);
@@ -162,7 +154,7 @@ class UserController extends BaseController
 		}
 
 		$data = [
-			'html' => $this->renderView('user/login_popup'),
+			'html' => $this->renderView('user/popups/login'),
 		];
 
 		return $this->ajaxSuccess($data);
