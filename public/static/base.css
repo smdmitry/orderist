@@ -66,12 +66,15 @@ body {
     bottom: 0;
     width: 500px;
 }
+.order-block .order-footer .order-date a {
+    color: gray;
+}
 .order-block .order-buttons {
     float: right;
 }
 
 .order-block.disabled {
-    transition: all 0.5s ease-in-out 0s;
+    transition: opacity 0.5s ease-in-out 0s;
     opacity: 0.6;
 }
 .order-block.disabled .order-button {

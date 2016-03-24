@@ -25,9 +25,9 @@
     <div class="order-footer">
         <div class="order-date">
             <div>
-            Заказчик: <?=$order['user']['name']?>, <?=BaseService::i()->formatDate($order['inserted'])?>
+            Заказчик: <a href="/user/profile/?id=<?=$order['user']['id']?>" onclick="event.stopPropagation();"><?=$order['user']['name']?></a>, <?=BaseService::i()->formatDate($order['inserted'])?>
             <? if (!empty($order['executer'])): ?>
-                <br>Выполнил: <?=$order['executer']['name']?>, <?=BaseService::i()->formatDate($order['executed'])?>
+                <br>Выполнил: <a href="/user/profile/?id=<?=$order['executer']['id']?>" onclick="event.stopPropagation();"><?=$order['executer']['name']?></a>, <?=BaseService::i()->formatDate($order['executed'])?>
             <? endif ?>
             </div>
         </div>

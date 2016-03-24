@@ -243,7 +243,8 @@ UPDATE users SET updated =  inserted;
          */
 
         /**
-         * UPDATE orders SET price = IF(
+         *
+        UPDATE orders SET price = IF(
         ROUND((RAND() * (3-0))+0) = 0,
         (ROUND((RAND() * (15-0))+0)) * 1000,
         IF(ROUND((RAND() * (2-0))+0) = 0, (ROUND((RAND() * (30-0))+0)) * 50, (ROUND((RAND() * (30-0))+0)) * 100)

@@ -10,6 +10,12 @@ class UserController extends BaseController
 		$this->view->navTab = self::TAB_USER;
 	}
 
+    public function profileAction()
+    {
+        $id = $this->p('id');
+        $this->view->viewUser = UserDao::i()->getById($id);
+    }
+
 	public function ordersAction()
 	{
 		if (!$this->USER) {
@@ -105,6 +111,13 @@ class UserController extends BaseController
 			$res = UserDao::i()->addUser($name, $email, $password);
 
 			if (!$res || !empty($res['errors'])) {
+                // А вдруг юзер решил зарегаться ещё раз и ввел существующий email и пароль
+                $user = UserDao::i()->getByEmail($email);
+                if ($user && password_verify($password, $user['password'])) {
+                    BaseAuth::i()->authUser($user);
+                    return $this->redirect('/');
+                }
+
 				return $this->ajaxSuccess(['errors' => $res['errors']]);
 			} else {
 				$this->debugSleep(1); // Да простит меня тестирующий, но ведь на котика-то надо посмотреть :)
