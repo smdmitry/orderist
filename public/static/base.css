@@ -165,3 +165,10 @@ a:hover { text-decoration: none; }
 .jsLink.active { border-bottom: 0px dashed #18bc9c; padding: 3px; color: #15a98c; background-color: #f0f0f0; }
 .jsLink.nonactive { padding: 3px; }
 .tooltip-inner { max-width: 350px; }
+
+@media (min-width: 768px) and (max-width: 1000px) {
+    .all-orders {
+        display: none !important;
+    }
+    .navbar-brand { margin-right: 0; }
+}
