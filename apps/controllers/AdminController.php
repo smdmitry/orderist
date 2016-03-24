@@ -230,6 +230,8 @@ TRUNCATE TABLE payments_1;
 TRUNCATE TABLE payments_2;
 TRUNCATE TABLE payments_3;
 UPDATE users SET cash = 20000000, hold = 10000000, payment_id = 0, updated = inserted;
+// http://orderist.smdmitry.com/admin/recover/
+UPDATE users SET cash = hold;
          */
 
         /*
