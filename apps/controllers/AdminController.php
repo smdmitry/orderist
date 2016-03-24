@@ -64,12 +64,12 @@ class AdminController extends BaseController
     }
 
     // Ошибки когда заказ исполнился, а транзакция денег не добавилась
-    protected function fixExecutedOrders()
+    protected function fixExecutedOrders($limit = 1000)
     {
         $db = BaseDao::i()->db;
 
         $count = 0;
-        $select = $db->select()->from(OrderDao::TABLE_ORDERS)->where('state = ?', OrderDao::STATE_EXECUTED)->where('user_payment_id = 0 OR executer_payment_id = 0')->limit(100);
+        $select = $db->select()->from(OrderDao::TABLE_ORDERS)->where('state = ?', OrderDao::STATE_EXECUTED)->where('user_payment_id = 0 OR executer_payment_id = 0')->limit($limit);
         $data = $db->fetchAll($select);
         foreach ($data as $order) {
             $orderId = $order['id'];
@@ -110,12 +110,12 @@ class AdminController extends BaseController
     }
 
     // Ошибки когда заказ создался, а деньги в холд не ушли
-    protected function fixCreatedOrders()
+    protected function fixCreatedOrders($limit = 1000)
     {
         $db = BaseDao::i()->db;
 
         $fixedUsers = $fixedOrders = [];
-        $select = $db->select()->from(OrderDao::TABLE_ORDERS)->where('state = ?', OrderDao::STATE_NEW)->where('user_payment_id = ?', 0)->limit(100); // Если user_payment_id = 0, значит до конца заказ не создался и деньги не заморожены
+        $select = $db->select()->from(OrderDao::TABLE_ORDERS)->where('state = ?', OrderDao::STATE_NEW)->where('user_payment_id = ?', 0)->limit($limit); // Если user_payment_id = 0, значит до конца заказ не создался и деньги не заморожены
         $data = $db->fetchAll($select);
         foreach ($data as $order) {
             $userId = $order['user_id'];
@@ -138,7 +138,7 @@ class AdminController extends BaseController
     }
 
     // Ошибки когда транзакция есть, а денег то нет
-    protected function fixPayments($from, $to)
+    protected function fixPayments($from, $to, $limit = 1000)
     {
         $db = BaseDao::i()->db;
 
@@ -146,7 +146,7 @@ class AdminController extends BaseController
         for ($i = 0; $i < UserDao::TABLE_PAYMENTS_SHARDS; $i++) {
             $table = UserDao::TABLE_PAYMENTS . "_{$i}";
 
-            $select = $db->select()->from($table)->where('? <= inserted', $from)->where('inserted <= ?', $to)->limit(100); // Выбрали все транзакции за этот период
+            $select = $db->select()->from($table)->where('? <= inserted', $from)->where('inserted <= ?', $to)->limit($limit); // Выбрали все транзакции за этот период
             $payments = $db->fetchAll($select);
             $userIds = array_column($payments, 'user_id');
             $userIds = array_unique($userIds);
