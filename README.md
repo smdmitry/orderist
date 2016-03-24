@@ -39,13 +39,12 @@ http://orderist.smdmitry.com
 6) Отправка данных из PHP в NodeJS тоже не для продакшена: прямой HTTP запрос, а надо бы через очередь развязать. С отправкой почты тоже самое.  
 
 ##### Посмотреть/потестить: 
-Тут: http://orderist.smdmitry.com  
 
 Для тестирования на [странице баланса](http://orderist.smdmitry.com/user/cash/) можно пополнить и вывести деньги со счета.  
 
-Также, есть админка, где можно включить/выключить режим отладки (Debug) и очистить все данные в memcache.  
+Также, есть [админка](http://orderist.smdmitry.com/admin/), где можно включить/выключить режим отладки (Debug) и очистить все данные в memcache.  
 Можно посмотреть [таблицы и данные](http://orderist.smdmitry.com/adminer.php) в БД. (Логин/Пароль: readonly)  
 
-В режиме отладки в расширении FireLogger ([Firefox](http://smd.im/eJ3), [Chrome](http://smd.im/WOs)) можно будет посмотреть все запросы к MySQL и Memcache, которые были выполнены (для AJAX запросов тоже).  
-[Пример](https://scr.smd.im/fs-ju4r5fnec5-2016-03-22-11_35_13.png)  
+В режиме отладки в расширении [FireLogger](http://firelogger.binaryage.com/) ([Firefox](https://addons.mozilla.org/ru/firefox/addon/firelogger/), [Chrome](http://smd.im/WOs)) можно будет посмотреть все запросы к MySQL и Memcache, которые были выполнены (для AJAX запросов тоже). [Пример](https://scr.smd.im/fs-ju4r5fnec5-2016-03-22-11_35_13.png)  
+
 FireLogger иногда пихает слишком много данных в заголовки и nginx захлебывается, я увеличил размер буферов - это должно помочь, но если выдает 502 ошибку, то нужно просто отключить Debug.
