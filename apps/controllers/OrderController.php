@@ -37,28 +37,21 @@ class OrderController extends BaseController
 
         $title = BaseService::i()->filterText($this->p('order_title'));
         $description = BaseService::i()->filterText($this->p('order_description'), true);
-        $orderPrice = floatval($this->p('order_price'));
-        $executerPrice = floatval($this->p('order_executer_price'));
-        $userPrice = floatval($this->p('order_user_price'));
 
-        $price = (int)floor($userPrice * 100);
-        $commission = ceil($price * OrderDao::COMMISSION);
-
-        // TODO: this
-        /*$orderPayment = $this->p('order_payment');
+        $orderPayment = $this->p('order_payment');
         $orderPrice = $this->p('order_price');
         $executerPrice = $this->p('order_executer_price');
         $userPrice = $this->p('order_user_price');
 
         if ($orderPayment == 'executer') {
-            // todo
+            $orderPrice = (int)round($orderPrice * 100, 0);
+            $price = (int)ceil($orderPrice / (1 - OrderDao::COMMISSION));
         } else {
-            $price = (int)floor($userPrice * 100);
-            $commission = ceil($price * OrderDao::COMMISSION); //review
-        }*/
+            $price = (int)round($orderPrice * 100, 0);
+        }
 
-        // TODO: Было бы хорошо проверить цену и комиссию, пришедшие с фронтенда, чтобы не возникло ситуации
-        // что фронт посчитал и показал юзеру одно, а мы на бэке другое
+        $commission = (int)ceil($price * OrderDao::COMMISSION);
+        $executer = $price - $commission;
 
         $errors = [];
         if (mb_strlen($title) < 1) {
@@ -71,12 +64,11 @@ class OrderController extends BaseController
         } elseif ($price <= 1) {
             $errors[] = 'Cлишком низкая стоимость заказа!';
         }
-        // TODO: review
-        /*if ($userPrice != $orderPrice && $executerPrice != $orderPrice) {
-            $errors[] = 'Ой, мы что-то неправльно рассчитали оплату заказа, попробуйте её изменить!';
-        }*/
         if (empty($errors) && $price - $commission <= 0) {
             $errors[] = 'Ну нельзя же так, чтобы исполнитель ничего не получил!';
+        }
+        if ($price != (int)round($userPrice * 100, 0) || $executer != (int)round($executerPrice * 100, 0)) {
+            $errors[] = 'Ой, что-то мы не так рассчитали вам оплату заказа. Это наш косяк, просто попробуйте указать другую сумму.';
         }
         if (!empty($errors)) {
             return $this->ajaxError([

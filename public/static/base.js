@@ -385,35 +385,37 @@ var orderist = {
                     orderist.order.payment.calculate();
                 }
             },
+            _calc: function(price, cmul, type) {
+                price = Math.round(price * 100);
+                if (type == 'executer') {
+                    price = Math.ceil(price / (1 - cmul));
+                }
+
+                var commission = Math.ceil(price * cmul);
+
+                return {price: price, commission: commission, executer: price - commission};
+            },
             calculate: function() {
                 var type = orderist.order.payment.type;
+                var popup = $('#order-create-popup');
                 var input = $('#order-create-popup input[name=order_price]');
 
+                var cmul = $('.order-commission', popup).data('value');
                 var price = input.val().replace(/[^0-9\.]/g, '');
-                var popup = $('#order-create-popup');
-                var commission = $('.order-commission', popup).data('value');
+                price = Number(price.match(/^\d+(?:\.\d{0,2})?/));
 
-                // TODO: review calculations
+                var data = orderist.order.payment._calc(price, cmul, type);
+                var realCommission = data.price == 0 ? (cmul * 100) : Math.round(data.commission / data.price * 100);
 
-                price = price * 100;
-                if (type == 'executer') {
-                    price = Math.ceil(price / (1 - commission));
-                }
+                var priceText = parseFloat((data.price / 100).toFixed(2));
+                var executerPriceText = parseFloat((data.executer / 100).toFixed(2));
 
-                $('.order_user_price', popup).val(parseFloat((price / 100).toFixed(2)));
-
-                var commissionPrice = Math.ceil(price * commission);
-                var executerPrice = (price - commissionPrice) / 100;
-                executerPrice = executerPrice > 0 ? executerPrice : 0
-                var realCommission = price == 0 ? (commission * 100) : Math.ceil(commissionPrice / price * 100);
+                $('.order_user_price', popup).val(priceText);
+                $('.order_executer_price', popup).val(executerPriceText);
 
                 $('.order-commission', popup).html(realCommission + '%');
-                $('.executer-price', popup).html(parseFloat(executerPrice.toFixed(2)));
-                $('.order_executer_price', popup).val(parseFloat(executerPrice.toFixed(2)));
-
-                if (type == 'executer') {
-                    $('.user-price', popup).html(parseFloat((price / 100).toFixed(2)));
-                }
+                $('.executer-price', popup).html(executerPriceText);
+                $('.user-price', popup).html(priceText);
             }
         },
         createPopup: {
@@ -602,3 +604,5 @@ $(document).ready(function () {
         }
     });
 });
+
+
