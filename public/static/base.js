@@ -521,7 +521,7 @@ var orderist = {
             }, 700, 'swing', function() {
                 orderist.user.updateCashLock = false;
                 orderist.user.updateCash();
-                $(this).delete();
+                $(this).remove();
             });
         },
         deleteConfirm: function (orderId) {
@@ -543,29 +543,37 @@ var orderist = {
                 }
             });
         },
+        offset: 0,
         isLoading: false,
         isFinished: false,
         loadMoreUrl: '/index/getpage/',
         loadMore: function(reload) {
-            if (reload) orderist.order.isFinished = false;
+            if (reload)  {
+                orderist.order.offset = 0;
+                orderist.order.isFinished = false;
+            }
             if (orderist.order.isLoading || orderist.order.isFinished) return;
 
             orderist.order.isLoading = true;
 
             var lastOrderId = reload ? 0 : $('.order-block:last').data('id');
+            var firstTime = reload ? 0 : $('.order-block:first').data('time');
+            var lastTime = reload ? 0 : $('.order-block:last').data('time');
             var ordersBlock = $('#orders-block');
 
             orderist.core.setLoader(ordersBlock, true);
-            orderist.core.post(orderist.order.loadMoreUrl, {last_order_id: lastOrderId}, function (response) {
+            orderist.core.post(orderist.order.loadMoreUrl, {last_order_id: lastOrderId, first_time: firstTime, last_time: lastTime, offset: orderist.order.offset}, function (response) {
                 orderist.core.setLoader(ordersBlock, false);
 
                 var listEl = $('.list', ordersBlock);
                 if (reload) listEl.html('');
                 if (!response.data.has_next) orderist.order.isFinished = true;
-                orderist.order.isLoading = false;
+                orderist.order.offset = response.data.next_offset;
 
                 listEl.append(response.data.html);
                 orderist.order.init('all');
+
+                orderist.order.isLoading = false;
             });
         },
         reload: function() {

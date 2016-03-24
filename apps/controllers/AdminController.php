@@ -237,6 +237,8 @@ UPDATE users SET updated =  inserted;
         IF(ROUND((RAND() * (2-0))+0) = 0, (ROUND((RAND() * (30-0))+0)) * 50, (ROUND((RAND() * (30-0))+0)) * 100)
         ) * 100, commission = CEIL(price * 0.18 / 100) * 100;
          * UPDATE orders SET price = price + commission;
+         * UPDATE orders SET price = 10000, commission = 100 WHERE price = 0;
+         * SELECT * FROM orders WHERE price = 0;
          */
 
         //UPDATE orders SET user_id = 1, price = RAND() * 100000, commission = RAND() * 1000, state = 1, executer_id = 0, user_payment_id = 0, executer_payment_id = 0, updated = inserted;

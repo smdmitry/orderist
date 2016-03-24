@@ -2,7 +2,7 @@
     $isMy = $USER && !empty($isMe);
     $price = $isMy ? $order['price'] : ($order['price'] - $order['commission']);
 ?>
-<div id="order-<?=$order['id']?>" data-id="<?=$order['id']?>" class="row col-md-10 col-md-offset-1 order-block<?=$order['state'] != OrderDao::STATE_NEW ? ' disabled' : ''?>"
+<div id="order-<?=$order['id']?>" data-id="<?=$order['id']?>" data-time="<?=$order['executed']?>" class="row col-md-10 col-md-offset-1 order-block<?=$order['state'] != OrderDao::STATE_NEW ? ' disabled' : ''?>"
      onclick="orderist.order.expand('<?=$order['id']?>')">
     <div class="order-price" style="text-align: right;">
         <? if ($isMy): ?>

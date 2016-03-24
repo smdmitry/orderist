@@ -58,18 +58,19 @@ class OrderDao extends BaseDao
         return $orders;
     }
 
-    public function getOrders($state, $limit = 10, $lastOrderId = 0)
+    public function getNewOrders($limit = 10, $lastOrderId = 0)
     {
-        if ($state == self::STATE_NEW && $lastOrderId == 0 && $limit <= self::NEW_ORDERS_LIMIT) {
+        $state = self::STATE_NEW;
+        if ($lastOrderId == 0 && $limit <= self::NEW_ORDERS_LIMIT) {
             $data = BaseMemcache::i()->get(self::NEW_ORDERS_MCKEY);
             if ($data === false) {
-                $data = $this->_getOrders($state, 0, self::NEW_ORDERS_LIMIT, $lastOrderId);
+                $data = $this->_getOrdersSortId($state, 0, self::NEW_ORDERS_LIMIT, $lastOrderId);
                 BaseMemcache::i()->set(self::NEW_ORDERS_MCKEY, $data, self::NEW_ORDERS_MCTIME);
             }
             return array_slice($data, 0, $limit, true);
         }
 
-        return $this->_getOrders($state, 0, $limit, $lastOrderId);
+        return $this->_getOrdersSortId($state, 0, $limit, $lastOrderId);
     }
 
     private function clearNewOrdersCache($orderId = 0)
@@ -86,23 +87,23 @@ class OrderDao extends BaseDao
         return false;
     }
 
-    public function getUserOrders($userId, $state, $limit = 10, $lastOrderId = 0)
+    public function getUserOrders($userId, $state, $limit = 10, $offset = 0, $lastOrderId = 0, $firstTime = 0)
     {
-        if ($lastOrderId == 0 && $limit <= self::USER_ORDERS_LIMIT) {
+        if (!$lastOrderId && !$firstTime && $limit <= self::USER_ORDERS_LIMIT) {
             $data = BaseMemcache::i()->get(self::USER_ORDERS_MCKEY . $state . '_' . $userId);
             if ($data === false) {
-                $data = $this->_getOrders($state, $userId, self::USER_ORDERS_LIMIT);
+                $data = $this->_getOrdersSortId($state, $userId, self::USER_ORDERS_LIMIT);
                 BaseMemcache::i()->set(self::USER_ORDERS_MCKEY . $state . '_' . $userId, $data, self::USER_ORDERS_MCTIME);
             }
             return array_slice($data, 0, $limit, true);
         }
 
-        return $this->_getOrders($state, $userId, $limit, $lastOrderId);
+        return $this->_getOrdersSortId($state, $userId, $limit, $offset, $lastOrderId);
     }
 
-    public function getExecuterOrders($userId, $limit = 10, $lastOrderId = 0)
+    public function getExecuterOrders($userId, $limit = 10, $offset = 0, $lastOrderId = 0, $firstTime = 0)
     {
-        if ($lastOrderId == 0 && $limit <= self::USER_ORDERS_LIMIT) {
+        if (!$lastOrderId && !$firstTime && $limit <= self::USER_ORDERS_LIMIT) {
             $data = BaseMemcache::i()->get(self::EXECUTED_ORDERS_MCKEY . $userId);
             if ($data === false) {
                 $data = $this->_getExecuterOrders($userId, self::USER_ORDERS_LIMIT);
@@ -111,17 +112,17 @@ class OrderDao extends BaseDao
             return array_slice($data, 0, $limit, true);
         }
 
-        return $this->_getExecuterOrders($userId, $limit, $lastOrderId);
+        return $this->_getExecuterOrders($userId, $limit, $offset, $lastOrderId, $firstTime);
     }
-    private function _getExecuterOrders($userId, $limit = 10, $lastOrderId = 0)
+    private function _getExecuterOrders($userId, $limit = 10, $offset = 0, $lastOrderId = 0, $firstTime = 0)
     {
         $limit = (int)$limit;
 
-        $select = $this->db->select()->from(self::TABLE_ORDERS)->order('id DESC')->limit($limit);
-        $select->where('executer_id = ?', $userId);
+        $select = $this->db->select()->from(self::TABLE_ORDERS)->order('executed DESC')->limit($limit, $offset);
+        $select->where('executer_id = ?', (int)$userId);
 
-        if ($lastOrderId) {
-            $select->where('id < ?', $lastOrderId);
+        if ($firstTime) {
+            $select->where('executed <= ?', $firstTime);
         }
 
         return $this->db->fetchAssoc($select);
@@ -138,7 +139,7 @@ class OrderDao extends BaseDao
         return BaseMemcache::i()->delete(self::EXECUTED_ORDERS_MCKEY . $userId);
     }
 
-    protected function _getOrders($state, $userId = 0, $limit = 10, $lastOrderId = 0)
+    protected function _getOrdersSortId($state, $userId = 0, $limit = 10, $lastOrderId = 0)
     {
         $limit = (int)$limit;
         $state = (int)$state;
@@ -148,7 +149,26 @@ class OrderDao extends BaseDao
             $select->where('state = ?', $state);
         }
         if ($userId) {
-            $select->where('user_id = ?', $userId);
+            $select->where('user_id = ?', (int)$userId);
+        }
+        if ($lastOrderId) {
+            $select->where('id < ?', $lastOrderId);
+        }
+
+        return $this->db->fetchAssoc($select);
+    }
+
+    protected function _getOrdersSortExecuted($state, $userId = 0, $limit = 10, $offset = 0, $lastOrderId = 0)
+    {
+        $limit = (int)$limit;
+        $state = (int)$state;
+
+        $select = $this->db->select()->from(self::TABLE_ORDERS)->order('id DESC')->limit($limit);
+        if ($state) {
+            $select->where('state = ?', $state);
+        }
+        if ($userId) {
+            $select->where('user_id = ?', (int)$userId);
         }
         if ($lastOrderId) {
             $select->where('id < ?', $lastOrderId);
@@ -208,7 +228,6 @@ class OrderDao extends BaseDao
         $orderId = (int)$order['id'];
         $state = self::STATE_NEW;
 
-        //$res = $this->db->delete(self::TABLE_ORDERS, $this->db->qq("id = ? AND state = ?", [$orderId, $state]));
         $res = $this->db->update(self::TABLE_ORDERS, [
             'state' => self::STATE_DELETED,
             'updated' => time(),

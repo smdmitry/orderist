@@ -28,24 +28,27 @@ class UserController extends BaseController
         }
 
 		$lastOrderId = (int)$this->p('last_order_id', 0);
+        $firstTime = (int)$this->p('first_time', 0);
 		$state = (int)$this->p('state', 0);
+        $offset = (int)$this->p('offset', 0);
 
-		$this->_prepareOrders($state, $lastOrderId);
+		$this->_prepareOrders($state, $offset, $lastOrderId, $firstTime);
 
 		$data = [
 			'html' => $this->renderView('index/orders_block'),
 			'has_next' => $this->view->hasNext,
+            'next_offset' => $offset + count($this->view->orders)
 		];
 
 		$this->ajaxSuccess($data);
 	}
-	protected function _prepareOrders($state, $lastOrderId = 0)
+	protected function _prepareOrders($state, $offset = 0, $lastOrderId = 0, $firstTime = 0)
 	{
         if ($state == OrderDao::FAKE_STATE_IS_EXECUTED) {
-            $orders = OrderDao::i()->getExecuterOrders($this->USER['id'], self::ORDERS_PER_PAGE, $lastOrderId);
+            $orders = OrderDao::i()->getExecuterOrders($this->USER['id'], self::ORDERS_PER_PAGE, $offset, $lastOrderId, $firstTime);
             $orders = OrderDao::i()->prepareOrders($orders);
         } else {
-            $orders = OrderDao::i()->getUserOrders($this->USER['id'], $state, self::ORDERS_PER_PAGE, $lastOrderId);
+            $orders = OrderDao::i()->getUserOrders($this->USER['id'], $state, self::ORDERS_PER_PAGE, $offset, $lastOrderId, $firstTime);
             $orders = OrderDao::i()->prepareOrders($orders);
         }
 
