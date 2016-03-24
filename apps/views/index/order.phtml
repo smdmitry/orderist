@@ -7,10 +7,10 @@
     <div class="order-price" style="text-align: right;">
         <? if ($isMy): ?>
             <div class="order-get-text" style="margin-bottom: 10px; font-size: 12px; color: gray;">Стоимость заказа:</div>
-            <span class="label label-info"><?=BaseService::i()->formatMoney($price)?> р.</span>
+            <span class="order-price-span label label-info"><?=BaseService::i()->formatMoney($price)?> р.</span>
         <? else: ?>
             <div class="order-get-text" style="margin-bottom: 10px; font-size: 12px; color: gray;">Вы <?=$USER && $order['executer_id'] == $USER['id'] ? 'получили' : 'получите'?>:</div>
-            <span class="label label-warning"><?=BaseService::i()->formatMoney($price)?> р.</span>
+            <span class="order-price-span label label-warning"><?=BaseService::i()->formatMoney($price)?> р.</span>
         <? endif ?>
     </div>
 
@@ -40,7 +40,7 @@
                 <? endif ?>
             <? else: ?>
                 <button type="button" onclick="event.stopPropagation(); return false;" class="btn btn-info order-button">
-                    Заказ выполнен
+                    <?=$order['state'] == OrderDao::STATE_DELETED ? 'Заказ удалён' : 'Заказ выполнен'?>
                 </button>
             <? endif ?>
         </div>

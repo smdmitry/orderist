@@ -5,8 +5,8 @@
     <li role="presentation" class="<?=$state === OrderDao::STATE_NEW ? 'active' : ''?>"><a href="/user/orders/?state=<?=OrderDao::STATE_NEW?>">Активные</a></li>
     <li role="presentation" class="<?=$state === OrderDao::STATE_EXECUTED ? 'active' : ''?>"><a href="/user/orders/?state=<?=OrderDao::STATE_EXECUTED?>">Завершённые</a></li>
     <!--<li role="presentation" class="<?=!$state ? 'active' : ''?>"><a href="/user/orders/?state=0">Все закакзы</a></li>-->
-    <li role="presentation" style="margin-left: 20px;" class="<?=$state === OrderDao::STATE_IS_EXECUTED ? 'active' : ''?>">
-        <a href="/user/orders/?state=<?=OrderDao::STATE_IS_EXECUTED?>">Выполненные мной</a>
+    <li role="presentation" style="margin-left: 20px;" class="<?=$state === OrderDao::FAKE_STATE_IS_EXECUTED ? 'active' : ''?>">
+        <a href="/user/orders/?state=<?=OrderDao::FAKE_STATE_IS_EXECUTED?>">Выполненные мной</a>
     </li>
 </ul>
 

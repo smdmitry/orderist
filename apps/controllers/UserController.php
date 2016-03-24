@@ -41,7 +41,7 @@ class UserController extends BaseController
 	}
 	protected function _prepareOrders($state, $lastOrderId = 0)
 	{
-        if ($state == OrderDao::STATE_IS_EXECUTED) {
+        if ($state == OrderDao::FAKE_STATE_IS_EXECUTED) {
             $orders = OrderDao::i()->getExecuterOrders($this->USER['id'], self::ORDERS_PER_PAGE, $lastOrderId);
             $orders = OrderDao::i()->prepareOrders($orders);
         } else {
@@ -51,7 +51,7 @@ class UserController extends BaseController
 
 		$this->view->state = $state;
 		$this->view->orders = $orders;
-		$this->view->isMe = $state == OrderDao::STATE_IS_EXECUTED ? false : true;
+		$this->view->isMe = $state == OrderDao::FAKE_STATE_IS_EXECUTED ? false : true;
 		$this->view->hasNext = count($orders) >= self::ORDERS_PER_PAGE;
 
 		return $orders;

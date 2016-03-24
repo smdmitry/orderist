@@ -6,7 +6,8 @@ class OrderDao extends BaseDao
 
     const STATE_NEW = 1;
     const STATE_EXECUTED = 2;
-    const STATE_IS_EXECUTED = 3;
+    const STATE_DELETED = 3;
+    const FAKE_STATE_IS_EXECUTED = 3;
 
     const COMMISSION = 0.10;
 
@@ -207,7 +208,11 @@ class OrderDao extends BaseDao
         $orderId = (int)$order['id'];
         $state = self::STATE_NEW;
 
-        $res = $this->db->delete(self::TABLE_ORDERS, $this->db->qq("id = ? AND state = ?", [$orderId, $state]));
+        //$res = $this->db->delete(self::TABLE_ORDERS, $this->db->qq("id = ? AND state = ?", [$orderId, $state]));
+        $res = $this->db->update(self::TABLE_ORDERS, [
+            'state' => self::STATE_DELETED,
+            'updated' => time(),
+        ], $this->db->qq("id = ? AND state = ?", [$orderId, $state]));
 
         if ($res) {
             $this->clearNewOrdersCache($orderId);

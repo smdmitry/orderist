@@ -53,27 +53,8 @@ var orderist = {
                 errorBlock.html('');
             }
 
-            if (response.base) {
-                if (response.base.cash) {
-                    if ($('.navbar .user-cash').html() != response.base.cash) {
-                        $.each($('.user-cash'), function(i, el) {
-                            el = $(el);
-                            var size = el.data('font-size') || el.css('font-size');
-                            var toSize = (parseFloat(size) + 6) + 'px';
-                            el.data('font-size', size);
-                            el.stop(true, true).animate({fontSize: toSize}, 200).animate({fontSize: size}, 200);
-                        });
-                    }
-                }
-
-                response.base.cash && $('.user-cash').html(response.base.cash);
-                response.base.hold && $('.user-hold').html(response.base.hold);
-
-                if (parseFloat(response.base.hold) == 0) {
-                    $('.user-cash-hold-block').hide();
-                } else {
-                    $('.user-cash-hold-block').show();
-                }
+            if (response.base && (response.base.cash || response.base.hold)) {
+                orderist.user.updateCash(response.base);
             }
             if (response.data) {
                 if (!response.res) {
@@ -329,6 +310,40 @@ var orderist = {
             if ($('#user-payments-block').length) {
                 orderist.user.loadPayments(true);
             }
+        },
+        updateCashLock: false,
+        updateCashData: null,
+        updateCash: function(data) {
+            data = data || orderist.user.updateCashData;
+
+            if (orderist.user.updateCashLock) {
+                orderist.user.updateCashData = data;
+                return;
+            }
+
+            if (!data) return;
+            orderist.user.updateCashData = null;
+
+            if (data.cash) {
+                if ($('.navbar .user-cash').html() != data.cash) {
+                    $.each($('.user-cash'), function(i, el) {
+                        el = $(el);
+                        var size = el.data('font-size') || el.css('font-size');
+                        var toSize = (parseFloat(size) + 6) + 'px';
+                        el.data('font-size', size);
+                        el.stop(true, true).animate({fontSize: toSize}, 200).animate({fontSize: size}, 200);
+                    });
+                }
+            }
+
+            data.cash && $('.user-cash').html(data.cash);
+            data.hold && $('.user-hold').html(data.hold);
+
+            if (parseFloat(data.hold) == 0) {
+                $('.user-cash-hold-block').hide();
+            } else {
+                $('.user-cash-hold-block').show();
+            }
         }
     },
     order: {
@@ -366,7 +381,7 @@ var orderist = {
                         block.html($('.payment-for-' + type, popup).html()).fadeIn('fast')
                     });
                 } else {
-                    block.html($('.payment-for-order', popup).html());
+                    block.html($('.payment-for-'+type, popup).html());
                     orderist.order.payment.calculate();
                 }
             },
@@ -462,6 +477,7 @@ var orderist = {
                 return false;
             }
 
+            orderist.user.updateCashLock = true;
             orderist.core.post('/order/execute/', {order_id: orderId}, function (response) {
                 orderist.core.setLoading(orderBlock, false);
 
@@ -478,7 +494,32 @@ var orderist = {
                 if (orderist.core.processResponse(response)) {
                     disableBtn(orderBlock);
                     $('.order-get-text', orderBlock).html('Вы получили:');
+                    orderist.order.animate(orderId);
+                } else {
+                    orderist.user.updateCashLock = false;
                 }
+            });
+        },
+        animate: function(orderId) {
+            var orderBlock = $('#order-'+orderId);
+            var blockTo = $('.nav .user-cash');
+            var price = $('.order-price span.label', orderBlock);
+
+            price.clone().css({
+                'opacity': '1',
+                'position': 'absolute',
+                'padding': '6px 10px 7px 10px',
+                'z-index': '100',
+                top: price.offset().top - 1,
+                left: price.offset().left + 1
+            }).appendTo($('body')).animate({
+                'top': blockTo.offset().top,
+                'left': blockTo.offset().left,
+                'opacity': 0.1
+            }, 700, 'swing', function() {
+                orderist.user.updateCashLock = false;
+                orderist.user.updateCash();
+                $(this).delete();
             });
         },
         deleteConfirm: function (orderId) {

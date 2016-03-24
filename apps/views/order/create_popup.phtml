@@ -23,10 +23,10 @@
                     <div class="form-group">
                         <label for="order_price" class="col-lg-2 control-label">Оплата</label>
                         <div class="col-lg-10">
-                            <span class="help-block" style="margin-top: 12px;"><span class="jsLink type-order active" onclick="orderist.order.payment.init('order');">заказа</span> / <span class="jsLink type-executer nonactive" onclick="orderist.order.payment.init('executer');">исполнителю</span></span>
+                            <span class="help-block" style="margin-top: 11px;"><span class="jsLink type-order active" onclick="orderist.order.payment.init('order');">по сумме заказа</span> / <span class="jsLink type-executer nonactive" onclick="orderist.order.payment.init('executer');">по сумме исполнителю</span></span>
                             <div class="input-group">
                                 <span class="input-group-addon">Руб.</span>
-                                <input type="text" name="order_price" class="form-control" placeholder="0.00">
+                                <input type="text" name="order_price" class="form-control" placeholder="0.00" autocomplete="off">
                             </div>
                             <div class="payment-for-block"></div>
                             <div class="payment-for-order h">
@@ -59,7 +59,7 @@
         </div>
         <div class="modal-footer done" style="display: none;">
             <div class="alert alert-info">
-                Ваш заказ успешно размещен и скоро появится на главной странице.
+                Ваш заказ успешно размещен и уже появился на главной странице.
             </div>
             <a href="/user/orders/">К моим заказам</a>
             <button type="button" class="btn btn-primary btn-success" onclick="orderist.order.createPopup.open();">Новый заказ</button>
