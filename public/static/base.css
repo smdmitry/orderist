@@ -66,12 +66,15 @@ body {
     bottom: 0;
     width: 500px;
 }
+.order-block .order-footer .order-date a {
+    color: gray;
+}
 .order-block .order-buttons {
     float: right;
 }
 
 .order-block.disabled {
-    transition: all 0.5s ease-in-out 0s;
+    transition: opacity 0.5s ease-in-out 0s;
     opacity: 0.6;
 }
 .order-block.disabled .order-button {
@@ -162,3 +165,10 @@ a:hover { text-decoration: none; }
 .jsLink.active { border-bottom: 0px dashed #18bc9c; padding: 3px; color: #15a98c; background-color: #f0f0f0; }
 .jsLink.nonactive { padding: 3px; }
 .tooltip-inner { max-width: 350px; }
+
+@media (min-width: 768px) and (max-width: 1000px) {
+    .all-orders {
+        display: none !important;
+    }
+    .navbar-brand { margin-right: 0; }
+}

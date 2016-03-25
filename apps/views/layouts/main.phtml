@@ -32,7 +32,7 @@
         </div>
         <div class="navbar-collapse collapse" id="navbar-main">
             <ul class="nav navbar-nav">
-                <li class="<?=$navTab == BaseController::TAB_ORDERS ? 'active' : 'unactive'?>">
+                <li class="all-orders <?=$navTab == BaseController::TAB_ORDERS ? 'active' : 'unactive'?>">
                     <a href="/orders/">Все заказы</a>
                 </li>
                 <? if ($USER): ?>

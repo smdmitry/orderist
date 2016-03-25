@@ -3,9 +3,6 @@ var orderist = {
         go: function (url) {
             document.location.href = url;
             return false;
-        },
-        refresh: function () {
-            document.location.href = document.location.href;
         }
     },
     core: {
@@ -16,7 +13,7 @@ var orderist = {
                 data: params,
                 success: callback,
                 error: function(xhr, ajaxOptions, thrownError) {
-                    callback({res: 0});
+                    callback({});
                 },
                 beforeSend: function (xhr, settings) {
                     function sameOrigin(url) {
@@ -45,7 +42,7 @@ var orderist = {
             return data;
         },
         processResponse: function(response, params) {
-            params = params || {}
+            params = params || {};
             var errorBlock = $('.errors-block:visible');
             var wasBlock = errorBlock.html();
 
@@ -106,14 +103,13 @@ var orderist = {
 
             $('span.loader', el).hide().html($('.loader-img:first').clone()).stop().fadeIn('slow');
 
+            var wasLoading = el.hasClass('loading');
             if (loading) {
-                var wasLoading = el.hasClass('loading');
                 if (wasLoading) return false;
 
                 btn.attr('disabled', 'disabled');
                 el.addClass('loading');
             } else {
-                var wasLoading = el.hasClass('loading');
                 if (!wasLoading) return false;
 
                 btn.removeAttr('disabled');
@@ -249,7 +245,7 @@ var orderist = {
             var block = $('#user-signup-popup');
 
             if (submit) {
-                var data = orderist.core.formData($('form', block));
+                data = orderist.core.formData($('form', block));
                 data['submit'] = 1;
 
                 if (!orderist.core.setLoading(block, true)) {
@@ -465,12 +461,12 @@ var orderist = {
                         orderist.order.payment.init();
                         orderist.popup.onOpenCallback = function() {
                             $('#order-create-popup input[name=order_price]').bind('keyup', function () {
-                                var result = this.value.replace(/[^0-9\.]/g, '')
+                                var result = this.value.replace(/[^0-9\.]/g, '');
                                 if (result != this.value) {
                                     this.value = result;
                                 }
                                 if (this.value) {
-                                    var result = Number(this.value.toString().match(/^\d+(?:\.\d{0,2})?/));
+                                    result = Number(this.value.toString().match(/^\d+(?:\.\d{0,2})?/));
                                     if (this.value != result) {
                                         this.value = result;
                                     }
@@ -527,7 +523,7 @@ var orderist = {
                     block.addClass('disabled');
                     $('button', block).html('Заказ выполнен');
                     $('button', block).removeAttr('onclick');
-                }
+                };
 
                 if (response.data && response.data.order == 'disabled') {
                     disableBtn(orderBlock);

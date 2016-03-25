@@ -13,6 +13,7 @@ class IndexController extends BaseController
 	{
         $this->view->navTab = self::TAB_ORDERS;
 
+        // TODO: Кешируется только первая страница, можно сделать и больше
         $this->_prepareOrders((int)$this->p('last_order_id', 0));
 
         if ($this->isAjax()) {

@@ -29,7 +29,7 @@ class OrderController extends BaseController
         if (!$this->USER) {
             return $this->ajaxError([
                 'type' => 'auth',
-                'error' => 'Для создания заказов, вам необходимо войти в свой профиль или зарегистрироваться на сайте',
+                'error' => 'Для создания заказов вам необходимо войти в свой профиль или зарегистрироваться на сайте.',
             ]);
         }
 
@@ -81,7 +81,7 @@ class OrderController extends BaseController
         $commission = (int)ceil($price * OrderDao::COMMISSION);
         $executer = $price - $commission;
 
-        if (BaseService::i()->isRoundingEnabled()) {
+        if ($price && BaseService::i()->isRoundingEnabled()) {
             $cmul = $commission / $price; // Комиссия, рассчитанная точно
 
             // Мы просто поверим тому, что пришло от фронта, если наша комиссия вписывается в пределы
@@ -174,7 +174,7 @@ class OrderController extends BaseController
         if (!$this->USER) {
             return $this->ajaxError([
                 'type' => 'auth',
-                'error' => 'Для выполнения заказов, вам необходимо войти в свой профиль или зарегистрироваться на сайте',
+                'error' => 'Для выполнения заказов вам необходимо войти в свой профиль или зарегистрироваться на сайте.',
             ]);
         }
 

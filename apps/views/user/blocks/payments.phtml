@@ -1,7 +1,7 @@
 <? foreach ($payments as $payment): ?>
     <tr class="user-payment-block <?=$payment['amount'] < 0 ? 'negative': 'positive'?>" data-id="<?=$payment['id']?>">
         <td><?=date('Y-m-d H:i:s', $payment['inserted'])?></td>
-        <td><?=BaseService::i()->formatMoney($payment['amount'])?></td>
+        <td><?=BaseService::i()->formatMoney($payment['amount'])?> руб.</td>
         <td>
             <? if (!empty($payment['order_id'])): ?>
                 <?=$payment['amount'] < 0 ? 'Списание': 'Оплата'?> за заказ #<a href="/order/order/?id=<?=$payment['order_id']?>"><?=$payment['order_id']?></a>
