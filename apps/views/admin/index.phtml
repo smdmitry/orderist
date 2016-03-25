@@ -2,6 +2,10 @@
     <div class="alert alert-info"><?=$text?></div>
 <? endif ?>
 
+<p>
+    Наш доход с комисии: <span class="label label-info"><?=BaseService::i()->formatMoney($income['commission'])?> руб.</span><br>
+</p>
+
 <? if (BaseService::i()->isRoundingEnabled()): ?>
     <a href="/admin/rounding/?enabled=0">Выключить округления</a><br>
 <? else :?>

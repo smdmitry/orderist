@@ -5,6 +5,16 @@ class AdminController extends BaseController
     public function indexAction()
     {
         $this->view->text = BaseMemcache::i()->get('admintext');
+
+        $db = BaseDao::i()->db;
+        $select = $db->select()->from(OrderDao::TABLE_ORDERS, ['SUM(commission) as commission', 'SUM(price) as price'])->where('state = ?', OrderDao::STATE_EXECUTED)->where('user_payment_id > 0')->where('executer_payment_id > 0');
+        $data = $db->fetchRow($select);
+
+        $this->view->income = ['price' => 0, 'commission' => 0];
+        if (!empty($data)) {
+            $this->view->income = $data;
+        }
+
         BaseMemcache::i()->delete('admintext');
     }
 
