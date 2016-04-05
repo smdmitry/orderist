@@ -625,7 +625,7 @@ $(document).ready(function () {
         $('[data-toggle="tooltip"]').tooltip()
     });
 
-    var socket = io.connect('http://orderist.smdmitry.com:8080');
+    var socket = io.connect((window.location.protocol == 'https:' ? 'https:' : 'http:') + '//ws.orderist.smdmitry.com');
     socket.on('message', function (data) {
         //console.log('socket data', data);
 

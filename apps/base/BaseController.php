@@ -29,6 +29,25 @@ class BaseController extends Controller
         }
     }
 
+    protected function checkHTTPSRedirect()
+    {
+        $isHTTPS = !empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https';
+        $isHTTPS = $isHTTPS || !empty($_SERVER['HTTPS']);
+
+        if (!$isHTTPS) {
+            return $this->redirect('https://orderist.smdmitry.com' . $_SERVER['REQUEST_URI']);
+        }
+
+        return false;
+    }
+
+    public function beforeExecuteRoute($dispatcher)
+    {
+        if ($this->checkHTTPSRedirect()) {
+            return false;
+        }
+    }
+
     protected function checkCSRF()
     {
         $token = $this->p('simpletoken', (isset($_SERVER['HTTP_X_SIMPLE_TOKEN']) ? $_SERVER['HTTP_X_SIMPLE_TOKEN'] : false));
