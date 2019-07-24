@@ -22,7 +22,7 @@ The objective was to make very simple analog of [AirTasker](https://www.airtaske
 1) Data consistency achieved by locks on memcache_add.  
 2) There will be no data corruption if any part of the system will fail at any line of code.  
 3) To speed up fixing data consistency after failure there are additional fields in database. 
-There is code which [detects and fixes them](https://github.com/smdmitry/orderist/blob/master/apps/controllers/AdminController.php#L43)  
+There is code which [detects and fixes them](https://github.com/smdmitry/orderist/blob/master/apps/controllers/AdminController.php#L53)  
 
 ##### Notes:
 1) There is no AJAX navigation, but all actions are AJAX  
@@ -36,6 +36,6 @@ You can modify your balance on [balance page](https://orderist.smdmitry.com/user
 There is [admin panel](https://orderist.smdmitry.com/admin/), to enable/disable debug and clear memcache.  
 Database admin panel to see [tables and data](https://orderist.smdmitry.com/adminer.php). (Login/Password: readonly)  
 
-When debug is on [FireLogger](https://firelogger.binaryage.com/) ([Firefox](https://addons.mozilla.org/ru/firefox/addon/firelogger/), [Chrome](https:://smd.im/WOs)) will display all queries to MySQL and Memcache. [Example](https://scr.smd.im/fs-ju4r5fnec5-2016-03-22-11_35_13.png)  
+When debug is on [FireLogger](https://firelogger.binaryage.com/) ([Firefox](https://addons.mozilla.org/ru/firefox/addon/firelogger/), [Chrome](https://smd.im/WOs)) will display all queries to MySQL and Memcache. [Example](https://scr.smd.im/fs-ju4r5fnec5-2016-03-22-11_35_13.png)  
 
 FireLogger sometimes pushes too much data in headers and nginx does not handle this correctly. So if there is 502 error, than just disable Debug.

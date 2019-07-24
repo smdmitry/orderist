@@ -1,5 +1,8 @@
 <?php
 
+// Система выполнения абстрактных заказов (Заказист)
+// Very simple analog of AirTasker (trial assignment)
+
 $GLOBALS['i18n_locale'] = 'en';
 //setlocale(LC_ALL, 'ru_RU.UTF8');
 
