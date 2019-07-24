@@ -1,50 +1,41 @@
-http://orderist.smdmitry.com  
+Live on: https://orderist.smdmitry.com  
 
-##### Приняты следующие допущения:  
-1) Комиссия системы составляет 10%.  
-2) Расчеты и хранение денег осуществляется целочисленно в копейках, меньше 1 копейки быть не может.  
-3) Для создания заказа у пользователя должна быть достаточная сумма на счету. При создании заказа эта сумма блокируется до его выполнения или удаления (соответственно, свободная сумма баланса становится меньше). Это позволяет гарантировать, что баланс пользователя не уйдет в минус и он не останется нам должен.  
+The objective was to make very simple analog of [AirTasker](https://www.airtasker.com), [YouDo](https://youdo.ru) 
 
-При фиксированном проценте комиссии мне не нравились цены (если стоимость заказа круглая, то доход исполнителя получался с копейками и наоборот). Поэтому я решил сделать два режима работы:  
-1) Расчеты без округления, с точностью до копейки.  
-2) Расчеты с округлением, чтобы получались "красивые" цены, за счет варьирования комиссии сайта (от 8% до 10%).  
-Эти режимы можно переключить в [админке](http://orderist.smdmitry.com/admin/), по умолчанию включён режим с округлением, как более дружелюбный к пользователю.  
+##### Acknowledgements:  
+1) Commission of the website is 10%.  
+2) Money is handled as integers (cents), amount can't be less than 1 cent.  
+3) To create order user must have enough balance. Order price is frozen untill it's completed or deleted. This ensures that user balance will never become negative.  
+4) Commission of the website is rounded up. (Example: 100.00005 USD = 100.01 USD)  
+5) Commission can be greater than 10%, if there is not enough accuracy. (Example: order price is 0.02 USD, then commission is 0.01 USD = 50%)  
 
-При точных расчетах следующие правила:  
-1) Комиссия системы округляется в большую сторону. (Например: 100.00005 руб = 100.01 руб)  
-2) Процент комиссии системы может быть больше 10% (но точно не меньше), если не хватает точности, чтобы взять меньшую комиссию. (Например: стоимость заказа 0.02 руб, тогда комиссия 0.01 руб = 50%)  
+##### Implementation:
+1) Phalcon Framework, Memcache, NodeJS (socket.io), Bootstrap, JQuery. 
+2) All tables can be on seperate DB servers (payments table is sharded by user_id)  
+3) Database transactions are not used at all (tables are InnoDB though)  
+4) Can handle highload, all db queries are indexed, and data cached by Memcache.  
+5) Websocket is used to notify about balance changes, orders statues, and first 1000 orders on mainpage.
+6) Order status changes are made without locks, consistency achieved by conditions in MySQL queries.  
+7) Balance changes are made through lockind.  
 
-##### Реализация:
-1) Использутся Phalcon Framework, Memcache, NodeJS (socket.io), Bootstrap, JQuery.  
-2) PHP код с ООП, но без сильно древовидных структур, чисто для разнесения кода по логическим блокам, поэтому должен превращаться в код без ООП без серьезных сложностей. Надеюсь, что это ок.  
-3) Все таблички независимые и могут быть на отдельных серверах. (Таблица с платежами payments - пошардена по user_id, остальные нет)  
-4) Транзакции в БД не используются вообще. (хотя сами таблицы InnoDB)  
-5) Всё рачитано на нагрузку, все запросы ложатся в индексы, данные кешируются в Memcache.  
-6) Вебсокет используется для оповещения об изменени баланса пользователя, статусов его заказов, а также первой 1000 заказов на главной. (с учетом авторизации пользователя)  
-7) Изменение заказов сделано без блокировок, атомарность обеспечивается на уровне условий в MySQL.  
-8) Изменение баланса юзера через блокировку.  
+##### Fault-tolerance:
+1) Data consistency achieved by locks on memcache_add.  
+2) There will be no data corruption if any part of the system will fail at any line of code.  
+3) To speed up fixing data consistency after failure there are additional fields in database. 
+There is code which [detects and fixes them](https://github.com/smdmitry/orderist/blob/master/apps/controllers/AdminController.php#L43)  
 
-##### Отказоустойчивость:
-1) Целостность данных обеспечивается блокировками на memcache_add, поэтому если он вообще не работает то пострадает не только скорость, но и может пострадать целостность.  
-2) Предусмотрена корректная работа при падении в любом месте PHP кода или базы.  
-3) Для более быстрого и простого восстановления целостности данных в случе отказа в таблицы добавлены дополнительные поля. (Можно обойтись и без них, но тут весь вопрос в том, как часто, и как, и что падает, и как быстро мы хотим всё починить после падения) Есть код, который [детектирует проблемы и исправляет](https://github.com/smdmitry/orderist/blob/master/apps/controllers/AdminController.php#L43)  
+##### Notes:
+1) There is no AJAX navigation, but all actions are AJAX  
+2) No user sessions are used, authentification is done by hash of user_id,password,email  
+3) Websockets and email sending are not ready for production
 
-##### Замечания:
-1) AJAX навигацию решил не делать, но все контекстные действия выполняются AJAXом  
-2) Не используются сессии, авторизация пользователя осуществляется по хэшу от его id,пароля,email  
-3) Реализация вебсокетов не совсем для продакшена, потому что каждая вкладка устанавливает свое соединение. Надо бы сделать одну вкладку ведущей и отправлять из неё данные на все остальные.  
-4) В текущей реализации в принципе можно попробовать обойтись и без плокировок, потому что расчетов баланса на стороне PHP нет, а сложение/вычитание осуществляется на уровне БД атомарно. Поэтому, максимум, что может произойти без блокировок - это будет невалидный кеш юзера и уход баланса в минус. Сами данные в БД будут целостными.  
-5) Таблица с заказами получилась довольно большой и нагруженной. Надо необходимостью оптимизации надо будет думать исходя из предполагаемого трафика и частоты добавлений/выполнений заказов. Например,
-разделить на несколько: таблицы для выборок списка айдишек заказов и основная, для хранения данных о самом заказе. (описание, состояние и проч.)  
-6) Отправка данных из PHP в NodeJS тоже не для продакшена: прямой HTTP запрос, а надо бы через очередь развязать. С отправкой почты тоже самое.  
+##### How to test: 
 
-##### Посмотреть/потестить: 
+You can modify your balance on [balance page](https://orderist.smdmitry.com/user/cash/).  
 
-Для тестирования на [странице баланса](http://orderist.smdmitry.com/user/cash/) можно пополнить и вывести деньги со счета.  
+There is [admin panel](https://orderist.smdmitry.com/admin/), to enable/disable debug and clear memcache.  
+Database admin panel to see [tables and data](https://orderist.smdmitry.com/adminer.php). (Login/Password: readonly)  
 
-Также, есть [админка](http://orderist.smdmitry.com/admin/), где можно включить/выключить режим отладки (Debug) и очистить все данные в memcache.  
-Можно посмотреть [таблицы и данные](http://orderist.smdmitry.com/adminer.php) в БД. (Логин/Пароль: readonly)  
+When debug is on [FireLogger](https://firelogger.binaryage.com/) ([Firefox](https://addons.mozilla.org/ru/firefox/addon/firelogger/), [Chrome](https:://smd.im/WOs)) will display all queries to MySQL and Memcache. [Example](https://scr.smd.im/fs-ju4r5fnec5-2016-03-22-11_35_13.png)  
 
-В режиме отладки в расширении [FireLogger](http://firelogger.binaryage.com/) ([Firefox](https://addons.mozilla.org/ru/firefox/addon/firelogger/), [Chrome](http://smd.im/WOs)) можно будет посмотреть все запросы к MySQL и Memcache, которые были выполнены (для AJAX запросов тоже). [Пример](https://scr.smd.im/fs-ju4r5fnec5-2016-03-22-11_35_13.png)  
-
-FireLogger иногда пихает слишком много данных в заголовки и nginx захлебывается, я увеличил размер буферов - это должно помочь, но если выдает 502 ошибку, то нужно просто отключить Debug.
+FireLogger sometimes pushes too much data in headers and nginx does not handle this correctly. So if there is 502 error, than just disable Debug.

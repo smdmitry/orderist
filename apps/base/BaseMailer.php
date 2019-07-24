@@ -25,7 +25,7 @@ class BaseMailer extends \Phalcon\DI\Injectable
         $mail->SMTPSecure = 'tls';
 
         $mail->From = $config['email'];
-        $mail->FromName = 'Заказист';
+        $mail->FromName = _g('Orderist');
 
         $mail->WordWrap = 50;
         $mail->isHTML(true);
@@ -37,11 +37,11 @@ class BaseMailer extends \Phalcon\DI\Injectable
     {
         return array(
             self::TYPE_SIGNUP => [
-                'subject' => 'Регистрация',
+                'subject' => _g('Signup'),
                 'tpl' => 'signup',
             ],
             self::TYPE_RECOVER_PASSWORD => [
-                'subject' => 'Восстановление пароля',
+                'subject' => _g('Password recovery'),
                 'tpl' => 'recover_password',
             ],
         );

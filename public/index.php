@@ -9,6 +9,8 @@ use Phalcon\Http\Request;
 use Phalcon\Mvc\View;
 use Phalcon\Mvc\Application as BaseApplication;
 
+require_once('../apps/lib/i18n.php');
+
 class Application extends BaseApplication
 {
 	protected function registerAutoloaders()
@@ -112,3 +114,4 @@ try {
 	header('Status: 503 Service Temporarily Unavailable');
 	echo $view->partial('error');
 }
+

@@ -13,7 +13,8 @@ class BaseService extends \Phalcon\DI\Injectable
     {
         $_COOKIE[$key] = $value;
         $expire = time() + $ttl;
-        return setcookie($key, $value, $expire, $path, '.'.\Phalcon\DI::getDefault()->getConfig()['domain'], false, false);
+        $domain = '.'.\Phalcon\DI::getDefault()->getConfig()['domain'];
+        return setcookie($key, $value, $expire, $path, $domain, false, false);
     }
 
     public function getCookie($key, $default = null)
@@ -28,33 +29,20 @@ class BaseService extends \Phalcon\DI\Injectable
 
     public function formatMoney($amount)
     {
-        return str_replace('.00', '', number_format($amount / 100, 2, '.', ' '));
+        $formatted = number_format($amount / 100, 2, '.', ' ');
+        return str_replace('.00', '', $formatted);
     }
 
     public function formatDate($time)
     {
-        $names = ['', 'января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-        $monthName = $names[date('n', $time)];
-
-        if (date('Y', $time) == date('Y')) {
-            return date('d ', $time) . $monthName . date(' H:i', $time);
-        }
-
-        return date('d ', $time) . $monthName . date(' Y', $time) . ' года';
-    }
-
-    public function isRoundingEnabled()
-    {
-        if (BaseService::i()->getCookie('rounding')) {
-            return false;
-        }
-
-        return true;
+        return strftime('%d %B %Y', $time);
     }
 
     public function filterText($str, $multiline = false)
     {
-        $str = $multiline ? preg_replace('! +!', ' ', $str) : preg_replace('!\s+!', ' ', $str);
+        $str = $multiline ?
+            preg_replace('! +!', ' ', $str) :
+            preg_replace('!\s+!', ' ', $str);
         return htmlspecialchars(trim(strip_tags($str)));
     }
 

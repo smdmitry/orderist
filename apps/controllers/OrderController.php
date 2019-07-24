@@ -2,7 +2,7 @@
 
 class OrderController extends BaseController
 {
-    // TODO: тут кеша нет, но это редкий Action, поэтому можно и без него
+    // TODO: no cache here, but is rare location so ok without it
     public function orderAction()
     {
         $orderId = (int)$this->p('id');
@@ -10,13 +10,13 @@ class OrderController extends BaseController
         $userId = $this->USER ? $this->USER['id'] : 0;
 
         if (!$order) {
-            $this->view->error = 'Ошибка, заказ не найден!';
+            $this->view->error = _g('Error, order not found!');
             return;
         }
 
         $canView = $userId && ($order['user_id'] == $userId || $order['executer_id'] == $userId);
         if ($order['state'] != OrderDao::STATE_NEW && !$canView) {
-            $this->view->error = 'Ошибка, у вас нет доступа к этому заказу!';
+            $this->view->error = _g('Error, you don\'t have access to this order!');
             return;
         }
 
@@ -29,17 +29,11 @@ class OrderController extends BaseController
         if (!$this->USER) {
             return $this->ajaxError([
                 'type' => 'auth',
-                'error' => 'Для создания заказов вам необходимо войти в свой профиль или зарегистрироваться на сайте.',
+                'error' => _g('To create orders you need to login or signup.'),
             ]);
         }
 
         $this->view->commission = OrderDao::COMMISSION;
-
-        if (BaseService::i()->isRoundingEnabled()) {
-            $this->view->cthreshold = OrderDao::CTHRESHOLD;
-        } else {
-            $this->view->cthreshold = 0;
-        }
 
         $data = [
             'html' => $this->renderView('order/popups/create'),
@@ -81,37 +75,26 @@ class OrderController extends BaseController
         $commission = (int)ceil($price * OrderDao::COMMISSION);
         $executer = $price - $commission;
 
-        if ($price && BaseService::i()->isRoundingEnabled()) {
-            $cmul = $commission / $price; // Комиссия, рассчитанная точно
-
-            // Мы просто поверим тому, что пришло от фронта, если наша комиссия вписывается в пределы
-            $price = (int)round($userPrice * 100, 0);
-            $executer = (int)round($executerPrice * 100, 0);
-            $commission = $price - $executer;
-
-            $mul = $commission / $price;
-            if (abs($cmul - $mul) > OrderDao::CTHRESHOLD || $mul > $cmul) { // Сравним с точной комиссией
-                $thresholdError = true;
-            }
-        }
-
         $errors = [];
         if (mb_strlen($title) < 1) {
-            $errors[] = 'Введите заголовок заказа!';
+            $errors[] = _g('Provide order title!');
         } else if (mb_strlen($title) > 160) {
-            $errors[] = 'Сликом длинный заголовок, будьте лаконичней!';
+            $errors[] = _g('Title is too long!');
         }
         if ($price == 0) {
-            $errors[] = 'Укажите стоимость заказа!';
+            $errors[] = _g('Provide order price!');
         } elseif ($price <= 1 || $commission <= 0) {
-            $errors[] = 'Cлишком низкая стоимость заказа!';
+            $errors[] = _g('Price is too low!');
         }
         if (empty($errors) && $price - $commission <= 0) {
-            $errors[] = 'Ну нельзя же так, чтобы исполнитель ничего не получил!';
+            $errors[] = _g('Executer will receive nothing!');
         }
-        if ($price != (int)round($userPrice * 100, 0) || $executer != (int)round($executerPrice * 100, 0) || !empty($thresholdError)) {
-            $errors[] = 'Ой, что-то мы не так рассчитали вам оплату заказа. Это наш косяк, просто попробуйте указать другую сумму.';
-            // Сюда мы не должны попадать при нормальной работе и надо бы залогировать ошибку
+        if (
+            $price != (int)round($userPrice * 100, 0) ||
+            $executer != (int)round($executerPrice * 100, 0)
+        ) {
+            $errors[] = _g('Oops, there is error in price calculation.');
+            // Log error here, this branch in not reachable under normal usage
         }
         if (!empty($errors)) {
             return $this->ajaxError([
@@ -122,36 +105,38 @@ class OrderController extends BaseController
         //$this->debugSleep();
 
         $userId = $this->USER['id'];
-        if (LockDao::i()->lock(LockDao::USER, $userId)) { // Залочим баланс юзера
-            $this->USER = UserDao::i()->getById($userId, 1); // Мало ли к этому моменту юзер уже изменился
+        if (LockDao::i()->lock(LockDao::USER, $userId)) { // Lock users balance
+            $this->USER = UserDao::i()->getById($userId, 1); // Get updated user info
 
-            // Спокойно проверяем хватит ли денег, зная что никто не обновит баланс пока есть лок
+            // Check if user has enough cash, knowing that balance is locked
             $cash = $this->USER['cash'] - $this->USER['hold'];
             if ($price > $cash) {
                 LockDao::i()->unlock(LockDao::USER, $userId);
                 $need = ($price - $cash) / 100;
                 return $this->ajaxError([
-                    'error' => "Ой, вам на хватает <b>{$need} руб.</b> для создания заказа!<br>Попробуйте снизить стоимость или <b><a href=\"/user/cash/\" onclick=\"orderist.order.createPopup.addCash('". (int)($need*100) ."'); return false;\">пополнить счет</a></b>.",
+                    'error' => _f('order_not_enough_money', $need, (int)($need*100)),
                 ]);
             }
 
             $orderId = OrderDao::i()->addOrder($userId, $title, $description, $price, $commission);
             if ($orderId) {
-                $updated = UserDao::i()->updateMoney($userId, 0, $price, $orderId); // А тут внутри юзер обновится, вместе с мемкешом
+                // User is updated here (incl memcache data)
+                $updated = UserDao::i()->updateMoney($userId, 0, $price, $orderId);
                 if ($updated) {
                     OrderDao::i()->_updateRaw($orderId, [
                         'user_payment_id' => 1,
                     ]);
                 } else {
-                    // Сюда мы не должны попадать при нормальной работе и надо бы залогировать ошибку и потом смотреть что произошло и обновить баланс юзера
+                    // Log error here, this branch in not reachable under normal usage
+                    // Need to update users balance
                 }
             } else {
-                // Сюда мы не должны попадать при нормальной работе и надо бы залогировать ошибку
+                // Log error here, this branch in not reachable under normal usage
             }
 
             LockDao::i()->unlock(LockDao::USER, $userId);
 
-            $this->USER = UserDao::i()->getById($userId); // Не забываем получить себе обновленного юзера
+            $this->USER = UserDao::i()->getById($userId); // Update global user
         }
 
         $res = !empty($orderId) && $orderId;
@@ -161,7 +146,7 @@ class OrderController extends BaseController
         }
 
         return $res ? $this->ajaxSuccess() : $this->ajaxError([
-            'error' => 'Произошла ошибка, попробуйте ещё раз.',
+            'error' => _g('Error, please try again.'),
         ]);
     }
 
@@ -174,7 +159,7 @@ class OrderController extends BaseController
         if (!$this->USER) {
             return $this->ajaxError([
                 'type' => 'auth',
-                'error' => 'Для выполнения заказов вам необходимо войти в свой профиль или зарегистрироваться на сайте.',
+                'error' => _g('To execute orders you need to login or signup.'),
             ]);
         }
 
@@ -187,22 +172,20 @@ class OrderController extends BaseController
 
         if (empty($order)) {
             return $this->ajaxError([
-                'error' => 'Ошибка, такого заказа не существует!',
+                'error' => _g('Error, order does not exist!'),
             ]);
         }
 
         if ($order['user_id'] == $this->USER['id']) {
             return $this->ajaxError([
-                'error' => 'Мы обнаружили, что вы пытаетесь выполнить свой же заказ.<br/>
-                Не стоит этого делать! Но если вы хотели удалить свой заказ, то это можно сделать на странице <a href="/user/orders/">Мои заказы</a>, либо
-                можно <a href="/user/orders/" onclick="orderist.order.deleteConfirm(\''. $orderId .'\'); event.stopPropagation(); return false;">удалить прямо сейчас</a>.',
+                'error' => _f('order_is_yours', $orderId),
             ]);
         }
 
         if ($order['state'] != OrderDao::STATE_NEW) {
             return $this->ajaxError([
                 'order' => 'disabled',
-                'error' => 'Извините, но этот заказ уже выполнен кем-то другим!',
+                'error' => _g('Sorry, this order was executed by someone else!'),
             ]);
         }
 
@@ -210,7 +193,7 @@ class OrderController extends BaseController
 
         $res = false;
 
-        // TODO: тут есть вероятность дэдлока, но он будет не вечным, а до секунды, поэтому забъем
+        // TODO: Deadlock possibily here, but short-term (1 sec)
         if (LockDao::i()->lock(LockDao::USER, $order['user_id'])) {
             if (LockDao::i()->lock(LockDao::USER, $this->USER['id'])) {
                 $res = OrderDao::i()->execute($order, $this->USER['id']);
@@ -224,10 +207,11 @@ class OrderController extends BaseController
                             'executer_payment_id' => $executerPaymentId,
                         ]);
                     } else {
-                        // Сюда мы не должны попадать при нормальной работе и надо бы залогировать ошибку и потом смотреть что произошло и обновить баланс юзера
+                        // Log error here, this branch in not reachable under normal usage
+                        // Need to update users balance
                     }
                 } else {
-                    // Сюда мы не должны попадать при нормальной работе и надо бы залогировать ошибку
+                    // Log error here, this branch in not reachable under normal usage
                 }
 
                 LockDao::i()->unlock(LockDao::USER, $this->USER['id']);
@@ -247,7 +231,7 @@ class OrderController extends BaseController
         }
 
         return $res ? $this->ajaxSuccess() : $this->ajaxError([
-            'error' => 'Произошла ошибка, попробуйте ещё раз.',
+            'error' => _g('Error, please try again.'),
         ]);
     }
 
@@ -270,20 +254,20 @@ class OrderController extends BaseController
 
         if (empty($order)) {
             return $this->ajaxError([
-                'error' => 'Ошибка, такого заказа не существует!',
+                'error' => _g('Error, order does not exist!'),
             ]);
         }
 
         if ($order['user_id'] != $this->USER['id']) {
             return $this->ajaxError([
-                'error' => 'Мы обнаружили, что вы пытаетесь удалить чужой заказ. Не стоит этого делать!',
+                'error' => _g('Do not try to delete not your orders!'),
             ]);
         }
 
         if ($order['state'] != OrderDao::STATE_NEW) {
             return $this->ajaxError([
                 'order' => 'disabled',
-                'error' => 'Извините, но нельзя удалить уже выполненный заказ!',
+                'error' => _g('Sorry, you can not delete completed order!'),
             ]);
         }
 
@@ -295,7 +279,8 @@ class OrderController extends BaseController
 
             if ($res) {
                 if (!UserDao::i()->updateMoney($this->USER['id'], 0, -$order['price'], $orderId)) {
-                    // Сюда мы не должны попадать при нормальной работе и надо бы залогировать ошибку и потом смотреть что произошло и обновить баланс юзера
+                    // Log error here, this branch in not reachable under normal usage
+                    // Need to update users balance
                 }
             }
 
@@ -314,7 +299,7 @@ class OrderController extends BaseController
         }
 
         return $res ? $this->ajaxSuccess() : $this->ajaxError([
-            'error' => 'Произошла ошибка, попробуйте ещё раз.',
+            'error' => _g('Error, please try again.'),
         ]);
     }
 }

@@ -8,10 +8,10 @@ class BaseMemcache extends \Phalcon\DI\Injectable
     public $mc;
 
     private $CACHED_TTL = 1;
-    private $cacheData   = []; // статический кеш на время фомирования страницы
-    private $cacheDelete = []; // статический кеш на удаление ключей
-    private $cachedTS    = []; // время жизни для ключей статического кеша
-    private $cachedDelTS  = []; // время жизни для ключей статического кеша
+    private $cacheData   = []; // static cache for page generation
+    private $cacheDelete = []; // static cache for deleted keys
+    private $cachedTS    = []; // static cache TTL
+    private $cachedDelTS  = []; // static cache deleted keys TTL
 
     public static function i() { static $instance; if (empty($instance)) $instance = new static(); return $instance; }
     private function __construct()
@@ -59,12 +59,15 @@ class BaseMemcache extends \Phalcon\DI\Injectable
         $time = microtime(true);
         $keysEmpty = 0;
 
-        // проверяем в статическом кеше
+        // Check in static cache
         if ($arrayRequested) {
             $value = $delkey = [];
 
             foreach ($keys as $key) {
-                if (array_key_exists($key, $this->cacheDelete) && ($time - $this->cachedDelTS[$key] < $this->CACHED_TTL)) {
+                if (
+                    array_key_exists($key, $this->cacheDelete) &&
+                    ($time - $this->cachedDelTS[$key] < $this->CACHED_TTL)
+                ) {
                     $value[$key] = false;
                 } else {
                     if (array_key_exists($key, $this->cacheData)
@@ -78,13 +81,16 @@ class BaseMemcache extends \Phalcon\DI\Injectable
                 }
             }
 
-            // удаляем ключи найденные в статическом кеше
+            // delete keys found in cache
             $keys = $delkey;
             if (empty($keys)) {
                 $keysEmpty = 1;
             }
         } else {
-            if (array_key_exists($keys, $this->cacheDelete) && ($time - $this->cachedDelTS[$keys] < $this->CACHED_TTL)) {
+            if (
+                array_key_exists($keys, $this->cacheDelete) &&
+                ($time - $this->cachedDelTS[$keys] < $this->CACHED_TTL)
+            ) {
                 $value = false;
             } else {
                 if (array_key_exists($keys, $this->cacheData)
@@ -97,7 +103,7 @@ class BaseMemcache extends \Phalcon\DI\Injectable
             }
         }
 
-        // ищем в mmcache
+        // get from memcache
         if (!$keysEmpty) {
             if ($arrayRequested) {
                 $mcResult = (array)$this->_get($keys);
@@ -105,7 +111,7 @@ class BaseMemcache extends \Phalcon\DI\Injectable
                 $mcResult = $this->_get($keys);
             }
 
-            // заносим в статический кеш
+            // and save to cache
             if ($arrayRequested) {
                 $value += $mcResult;
                 $this->cacheData += $value;
@@ -122,12 +128,12 @@ class BaseMemcache extends \Phalcon\DI\Injectable
 
     public function set($key, $value, $seconds = 900)
     {
-        $seconds = $seconds <= 2592000 ? (int)$seconds : 2592000; // мемкеш не ставит ключик, если указано время больше 30 дней
+        $seconds = $seconds <= 2592000 ? (int)$seconds : 2592000; // memcached does not set key if TTL > 30 days
         $time = microtime(true);
 
         $result = $this->_set($key, $value, $seconds);
         if ($result) {
-            // заносим в статический кеш
+            // save to cache
             $this->cacheData[$key] = $value;
             $this->cachedTS[$key] = $time;
             unset($this->cacheDelete[$key], $this->cachedDelTS[$key]);
@@ -138,12 +144,12 @@ class BaseMemcache extends \Phalcon\DI\Injectable
 
     public function add($key, $value, $seconds = 900)
     {
-        $seconds = $seconds <= 2592000 ? (int)$seconds : 2592000; // мемкеш не ставит ключик, если указано время больше 30 дней
+        $seconds = $seconds <= 2592000 ? (int)$seconds : 2592000; // memcached does not set key if TTL > 30 days
         $time = microtime(true);
 
         $result = $this->_add($key, $value, $seconds);
         if ($result) {
-            // заносим в статический кеш
+            // save to cache
             $this->cacheData[$key] = $value;
             $this->cachedTS[$key] = $time;
             unset($this->cacheDelete[$key], $this->cachedDelTS[$key]);
@@ -156,10 +162,13 @@ class BaseMemcache extends \Phalcon\DI\Injectable
     {
         $time = microtime(true);
 
-        //if (isset($this->cacheDelete[$key]) && ($time - $this->cachedDelTS[$key] < $this->CACHED_TTL)) return true; // Если хотим удалить 2 раза, пусть удаляется
+        //if (
+        //    isset($this->cacheDelete[$key]) &&
+        //    ($time - $this->cachedDelTS[$key] < $this->CACHED_TTL)
+        //) return true; // want to delete 2 times? Why not...
         $result = $this->_delete($key);
 
-        // удаляем из статического кеша
+        // delete from cache
         unset($this->cacheData[$key], $this->cachedTS[$key]);
         $this->cacheDelete[$key] = true;
         $this->cachedDelTS[$key] = $time;

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ru" lang="ru">
 <head>
-    <title>Заказист</title>
+    <title><?=_g('Orderist')?></title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -33,16 +33,16 @@
         <div class="navbar-collapse collapse" id="navbar-main">
             <ul class="nav navbar-nav">
                 <li class="all-orders <?=$navTab == BaseController::TAB_ORDERS ? 'active' : 'unactive'?>">
-                    <a href="/orders/">Все заказы</a>
+                    <a href="/orders/"><?=_g('All orders')?></a>
                 </li>
                 <? if ($USER): ?>
                     <li class="<?=$navTab == BaseController::TAB_MY_ORDERS ? 'active' : 'unactive'?>">
-                        <a href="/user/orders/">Мои заказы</a>
+                        <a href="/user/orders/"><?=_g('My orders')?></a>
                     </li>
                 <? endif ?>
                 <li>
                     <form class="navbar-form">
-                        <a href="/order/create/" onclick="orderist.order.createPopup.open(); return false;" class="btn btn-success btn-sm">+ Разместить заказ</a>
+                        <a href="/order/create/" onclick="orderist.order.createPopup.open(); return false;" class="btn btn-success btn-sm">+ <?=_g('Create order')?></a>
                     </form>
                 </li>
             </ul>
@@ -50,23 +50,23 @@
             <ul class="nav navbar-nav navbar-right">
                 <? if ($USER): ?>
                     <li class="<?=$navTab == BaseController::TAB_CASH ? 'active' : 'unactive'?>">
-                        <a href="/user/cash/" style="max-height: 51px; white-space: nowrap; max-width: 200px; overflow: hidden;">Баланс: <span style="font-weight: bold;"><span class="user-cash"><?=UserDao::i()->getField($USER, 'cash')?></span> руб.</span></a>
+                        <a href="/user/cash/" style="max-height: 51px; white-space: nowrap; max-width: 200px; overflow: hidden;"><?=_g('Balance')?>: <span style="font-weight: bold;"><span class="user-cash"><?=UserDao::i()->getField($USER, 'cash')?></span> <?=_g('USD')?></span></a>
                     </li>
                     <li class="dropdown <?=$navTab == BaseController::TAB_USER ? 'active' : 'unactive'?>">
-                        <a class="dropdown-toggle" data-toggle="dropdown" href="/user/"><?=mb_strlen($USER['name']) <= 10 ? $USER['name'] : 'Профиль'?> <span class="caret"></span></a>
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="/user/"><?=mb_strlen($USER['name']) <= 10 ? _tr($USER['name']) : _g('Profile')?> <span class="caret"></span></a>
                         <ul class="dropdown-menu" aria-labelledby="download">
-                            <li><a href="/user/cash/">Баланс</a></li>
-                            <li><a href="/user/">Профиль</a></li>
+                            <li><a href="/user/cash/"><?=_g('Balance')?></a></li>
+                            <li><a href="/user/"><?=_g('Profile')?></a></li>
                             <li class="divider"></li>
-                            <li><a href="/user/logout/">Выход</a></li>
+                            <li><a href="/user/logout/"><?=_g('Log out')?></a></li>
                         </ul>
                     </li>
                 <? else: ?>
                     <li>
-                        <a href="/user/login/" onclick="orderist.user.login(); return false;">Мой профиль</a>
+                        <a href="/user/login/" onclick="orderist.user.login(); return false;"><?=_g('My profile')?></a>
                     </li>
                     <li>
-                        <a href="/user/signup/" onclick="orderist.user.signup(); return false;">Регистрация</a>
+                        <a href="/user/signup/" onclick="orderist.user.signup(); return false;"><?=_g('Signup')?></a>
                     </li>
                 <? endif ?>
             </ul>

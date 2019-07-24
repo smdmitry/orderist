@@ -13,7 +13,7 @@ class IndexController extends BaseController
 	{
         $this->view->navTab = self::TAB_ORDERS;
 
-        // TODO: Кешируется только первая страница, можно сделать и больше
+        // TODO: Only first page is cached, but can be more...
         $this->_prepareOrders((int)$this->p('last_order_id', 0));
 
         if ($this->isAjax()) {
@@ -28,7 +28,13 @@ class IndexController extends BaseController
 	}
 	protected function _prepareOrders($lastOrderId = 0)
 	{
-        $orders = OrderDao::i()->getOrders(['state' => OrderDao::STATE_NEW], ['id', 'DESC'], self::ORDERS_PER_PAGE, 0, $lastOrderId);
+        $orders = OrderDao::i()->getOrders(
+            ['state' => OrderDao::STATE_NEW],
+            ['id', 'DESC'],
+            self::ORDERS_PER_PAGE,
+            0,
+            $lastOrderId
+        );
         $orders = OrderDao::i()->prepareOrders($orders);
 
         $this->view->orders = $orders;

@@ -50,7 +50,10 @@ class BaseController extends Controller
 
     protected function checkCSRF()
     {
-        $token = $this->p('simpletoken', (isset($_SERVER['HTTP_X_SIMPLE_TOKEN']) ? $_SERVER['HTTP_X_SIMPLE_TOKEN'] : false));
+        $token = $this->p(
+            'simpletoken',
+            (isset($_SERVER['HTTP_X_SIMPLE_TOKEN']) ? $_SERVER['HTTP_X_SIMPLE_TOKEN'] : false)
+        );
         return BaseService::i()->checkCSRFToken($token);
     }
 
@@ -129,7 +132,9 @@ class BaseController extends Controller
 
     public function isAjax()
     {
-        return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
+        return
+            isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+            strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
     }
 
     public function updateUserData()

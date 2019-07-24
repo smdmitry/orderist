@@ -2,45 +2,45 @@
     <div class="modal-content">
         <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            <h4 class="modal-title">Создание нового заказа</h4>
+            <h4 class="modal-title"><?=_g('New order creation')?></h4>
         </div>
         <div class="modal-body">
             <form class="form-horizontal" method="post" action="/order/create/" onsubmit="orderist.order.create(); return false;">
                 <fieldset>
                     <div class="errors-block"></div>
                     <div class="form-group">
-                        <label for="order_title" class="col-lg-2 control-label">Заголовок</label>
+                        <label for="order_title" class="col-lg-2 control-label"><?=_g('Header')?></label>
                         <div class="col-lg-10">
-                            <input class="form-control" name="order_title" placeholder="Краткое описание заказа" type="text">
+                            <input class="form-control" name="order_title" placeholder="<?=_g('Short description')?>" type="text">
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="order_description" class="col-lg-2 control-label">Описание</label>
+                        <label for="order_description" class="col-lg-2 control-label"><?=_g('Description')?></label>
                         <div class="col-lg-10">
-                            <textarea class="form-control" rows="3" name="order_description" placeholder="Пожалуйста, развёрнуто опишите, что нужно будет сделать"></textarea>
+                            <textarea class="form-control" rows="3" name="order_description" placeholder="<?=_g('Please describe what needs to be done')?>"></textarea>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="order_price" class="col-lg-2 control-label">Оплата</label>
+                        <label for="order_price" class="col-lg-2 control-label"><?=_g('Payment')?></label>
                         <div class="col-lg-10">
-                            <span class="help-block" style="margin-top: 11px;"><span class="jsLink type-order active" onclick="orderist.order.payment.init('order');">по сумме заказа</span> / <span class="jsLink type-executer nonactive" onclick="orderist.order.payment.init('executer');">по сумме исполнителю</span></span>
+                            <span class="help-block" style="margin-top: 11px;"><span class="jsLink type-order active" onclick="orderist.order.payment.init('order');"><?=_g('by order price')?></span> / <span class="jsLink type-executer nonactive" onclick="orderist.order.payment.init('executer');"><?=_g('by executer revenue')?></span></span>
                             <div class="input-group">
-                                <span class="input-group-addon">Руб.</span>
+                                <span class="input-group-addon"><?=_g('USD')?></span>
                                 <input type="text" name="order_price" class="form-control" placeholder="0.00" autocomplete="off">
                             </div>
                             <div class="payment-for-block"></div>
                             <div class="payment-for-order h">
-                                <span class="help-block">Это сумма, которую вы заплатите за выполнение заказа.</span>
+                                <span class="help-block"><?=_g('This is the price you will pay for your order.')?></span>
                                 <div>
-                                    Комиссия сайта <span class="label label-default order-commission" data-value="<?=$commission?>"><?=$commission * 100?>%</span>,
-                                    исполнитель получит <span class="label label-info"><span class="executer-price">0</span> руб.</span>
+                                    <?=_g('Site comission')?> <span class="label label-default order-commission" data-value="<?=$commission?>"><?=$commission * 100?>%</span>,
+                                    <?=_g('executer will get')?> <span class="label label-info"><span class="executer-price">0</span> <?=_g('USD')?></span>
                                 </div>
                             </div>
                             <div class="payment-for-executer h">
-                                <span class="help-block">Это сумма, которую получит исполнитель.</span>
+                                <span class="help-block"><?=_g('This is the amount the executer will receive.')?></span>
                                 <div>
-                                    Комиссия сайта <span class="label label-default order-commission" data-value="<?=$commission?>"><?=$commission * 100?>%</span>,
-                                    вы заплатите <span class="label label-info"><span class="user-price">0</span> руб.</span>
+                                    <?=_g('Site comission')?> <span class="label label-default order-commission" data-value="<?=$commission?>"><?=$commission * 100?>%</span>,
+                                    <?=_g('you will pay')?> <span class="label label-info"><span class="user-price">0</span> <?=_g('USD')?></span>
                                 </div>
                             </div>
                         </div>
@@ -49,22 +49,21 @@
                     <input type="text" name="order_payment" class="order_payment" value="" style="display: none;"/>
                     <input type="text" name="order_executer_price" class="order_executer_price" value="0" style="display: none;"/>
                     <input type="text" name="order_user_price" class="order_user_price" value="0" style="display: none;"/>
-                    <input type="text" name="order_cthreshold" class="order_cthreshold" value="<?=$cthreshold?>" style="display: none;"/>
                 </fieldset>
             </form>
         </div>
         <div class="modal-footer create">
             <span class="loader"></span>
-            <button type="button" class="btn btn-default" data-dismiss="modal">Отмена</button>
-            <button type="button" class="btn btn-loading btn-primary btn-success" onclick="$('#order-create-popup form').submit();">Разместить заказ</button>
+            <button type="button" class="btn btn-default" data-dismiss="modal"><?=_g('Cancel')?></button>
+            <button type="button" class="btn btn-loading btn-primary btn-success" onclick="$('#order-create-popup form').submit();"><?=_g('Create order')?></button>
         </div>
         <div class="modal-footer done" style="display: none;">
             <div class="alert alert-info">
-                Ваш заказ успешно размещен и уже появился на главной странице.
+                <?=_g('Your order is created and already visible on main page.')?>
             </div>
-            <a href="/user/orders/">К моим заказам</a>
-            <button type="button" class="btn btn-primary btn-success" onclick="orderist.order.createPopup.open();">Новый заказ</button>
-            <button type="button" class="btn btn-primary" data-dismiss="modal">Закрыть</button>
+            <a href="/user/orders/"><?=_g('To my orders')?></a>
+            <button type="button" class="btn btn-primary btn-success" onclick="orderist.order.createPopup.open();"><?=_g('New order')?></button>
+            <button type="button" class="btn btn-primary" data-dismiss="modal"><?=_g('Close')?></button>
         </div>
     </div>
 </div>

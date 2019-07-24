@@ -1,9 +1,9 @@
 <div class="jumbotron" style="margin-top: -15px;">
     <div class="container">
-        <h1>Добро пожаловать!</h1>
-        <p>На этом сайте вы сможете найти исполнителей на любой <a href="/order/create/" onclick="orderist.order.createPopup.open(); return false;">свой заказ</a>, а также выполнять <a href="/orders/">заказы других</a> и зарабатывать на этом деньги.</p>
+        <h1><?=_g('Welcome!')?></h1>
+        <p><?=_g('welcome_on_this_site')?>
     </div>
 </div>
 
-<h1 style="text-align: center">Все доступные заказы</h1>
+<h1 style="text-align: center"><?=_g('All available orders')?></h1>
 <? include 'orders.phtml' ?>

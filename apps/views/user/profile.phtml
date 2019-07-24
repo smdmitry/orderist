@@ -1,12 +1,12 @@
 <? if (empty($viewUser)): ?>
-    <div class="alert alert-danger">Пользователь не найден!</div>
+    <div class="alert alert-danger"><?=_g('User not found!')?></div>
 <? else: ?>
     <form class="form-horizontal">
         <fieldset>
             <div class="form-group">
-                <label for="user_name" class="col-lg-2 control-label">Имя</label>
+                <label for="user_name" class="col-lg-2 control-label"><?=_g('First name')?></label>
                 <div class="col-lg-10">
-                    <input type="text" class="form-control" name="user_name" placeholder="<?=$viewUser['name']?>" disabled>
+                    <input type="text" class="form-control" name="user_name" placeholder="<?=_tr($viewUser['name'])?>" disabled>
                 </div>
             </div>
         </fieldset>

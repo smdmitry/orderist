@@ -10,7 +10,6 @@ class OrderDao extends BaseDao
     const FAKE_STATE_EXECUTER = 3;
 
     const COMMISSION = 0.10;
-    const CTHRESHOLD = 0.2;
 
     const CACHE_ORDERS_LIMIT = IndexController::ORDERS_PER_PAGE;
     const NEW_ORDERS_MCKEY = 'orders_new';
@@ -71,14 +70,25 @@ class OrderDao extends BaseDao
     public function getOrders($filter, $sort, $limit = 10, $offset = 0, $sortId = 0)
     {
         if (!$sortId && !$offset && $limit <= self::CACHE_ORDERS_LIMIT) {
-            if (!empty($filter['state']) && empty($filter['user_id']) && empty($filter['executer_id']) && $filter['state'] == self::STATE_NEW) {
+            if (
+                !empty($filter['state']) &&
+                empty($filter['user_id']) &&
+                empty($filter['executer_id']) &&
+                $filter['state'] == self::STATE_NEW
+            ) {
                 $mckey = self::NEW_ORDERS_MCKEY;
                 $mctime = self::NEW_ORDERS_MCTIME;
-            } else if (!empty($filter['user_id'])) {
+            } else if (
+                !empty($filter['user_id'])
+            ) {
                 $state = !empty($filter['state']) ? $filter['state'] : 0;
                 $mckey = self::USER_ORDERS_MCKEY . $state . '_' . $filter['user_id'];
                 $mctime = self::USER_ORDERS_MCTIME;
-            } else if (!empty($filter['executer_id']) && !empty($filter['state']) && $filter['state'] == self::STATE_EXECUTED) {
+            } else if (
+                !empty($filter['executer_id']) &&
+                !empty($filter['state']) &&
+                $filter['state'] == self::STATE_EXECUTED
+            ) {
                 $mckey = self::EXECUTER_ORDERS_MCKEY . $filter['executer_id'];
                 $mctime = self::USER_ORDERS_MCTIME;
             }
@@ -99,7 +109,9 @@ class OrderDao extends BaseDao
     {
         $limit = (int)$limit;
 
-        $select = $this->db->select()->from(self::TABLE_ORDERS)->order($sort[0] . ' ' . $sort[1])->limit($limit, $offset);
+        $select = $this->db->select()->from(self::TABLE_ORDERS)
+            ->order($sort[0] . ' ' . $sort[1])
+            ->limit($limit, $offset);
         if (isset($filter['user_id'])) {
             $select->where('user_id = ?', (int)$filter['user_id']);
         }
@@ -187,7 +199,10 @@ class OrderDao extends BaseDao
     {
         $minOrderId = BaseMemcache::i()->get('order_new_min');
         if ($minOrderId === false) {
-            $select = $this->db->select()->from(self::TABLE_ORDERS, 'MIN(id) as id')->where('state = ?', self::STATE_NEW)->order('id DESC')->limit(1000);
+            $select = $this->db->select()->from(self::TABLE_ORDERS, 'MIN(id) as id')
+                ->where('state = ?', self::STATE_NEW)
+                ->order('id DESC')
+                ->limit(1000);
             $minOrderId = (int)$this->db->fetchOne($select);
             BaseMemcache::i()->set('order_new_min', $minOrderId, 5*60);
         }

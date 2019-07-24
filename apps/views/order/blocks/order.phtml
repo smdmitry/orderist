@@ -6,11 +6,11 @@
      onclick="orderist.order.expand('<?=$order['id']?>')">
     <div class="order-price" style="text-align: right;">
         <? if ($isMy): ?>
-            <div class="order-get-text" style="margin-bottom: 10px; font-size: 12px; color: gray;">Стоимость заказа:</div>
-            <span class="order-price-span label label-info" data-toggle="tooltip" data-placement="left" title="Исполнитель <?=$order['state'] == OrderDao::STATE_NEW ? 'получит' : 'получил'?>: <?=BaseService::i()->formatMoney($order['price'] - $order['commission'])?> р."><?=BaseService::i()->formatMoney($price)?> р.</span>
+            <div class="order-get-text" style="margin-bottom: 10px; font-size: 12px; color: gray;"><?=_g('Order price:')?></div>
+            <span class="order-price-span label label-info" data-toggle="tooltip" data-placement="left" title="<?=$order['state'] == OrderDao::STATE_NEW ? _g('Executer will get') : _g('Executer got')?>: <?=BaseService::i()->formatMoney($order['price'] - $order['commission'])?> <?=_g('USD')?>"><?=BaseService::i()->formatMoney($price)?> <?=_g('USD')?></span>
         <? else: ?>
-            <div class="order-get-text" style="margin-bottom: 10px; font-size: 12px; color: gray;">Вы <?=$USER && $order['executer_id'] == $USER['id'] ? 'получили' : 'получите'?>:</div>
-            <span class="order-price-span label label-warning"><?=BaseService::i()->formatMoney($price)?> р.</span>
+            <div class="order-get-text" style="margin-bottom: 10px; font-size: 12px; color: gray;"><?=$USER && $order['executer_id'] == $USER['id'] ? _g('You received') : _g('You will receive')?>:</div>
+            <span class="order-price-span label label-warning"><?=BaseService::i()->formatMoney($price)?> <?=_g('USD')?></span>
         <? endif ?>
     </div>
 
@@ -25,9 +25,9 @@
     <div class="order-footer">
         <div class="order-date">
             <div>
-            Заказчик: <a href="/user/profile/?id=<?=$order['user']['id']?>" onclick="event.stopPropagation();"><?=$order['user']['name']?></a>, <?=BaseService::i()->formatDate($order['inserted'])?>
+                <?=_g('Client:')?> <a href="/user/profile/?id=<?=$order['user']['id']?>" onclick="event.stopPropagation();"><?=_tr($order['user']['name'])?></a>, <?=BaseService::i()->formatDate($order['inserted'])?>
             <? if (!empty($order['executer'])): ?>
-                <br>Выполнил: <a href="/user/profile/?id=<?=$order['executer']['id']?>" onclick="event.stopPropagation();"><?=$order['executer']['name']?></a>, <?=BaseService::i()->formatDate($order['executed'])?>
+                <br><?=_g('Executer:')?> <a href="/user/profile/?id=<?=$order['executer']['id']?>" onclick="event.stopPropagation();"><?=_tr($order['executer']['name'])?></a>, <?=BaseService::i()->formatDate($order['executed'])?>
             <? endif ?>
             </div>
         </div>
@@ -36,16 +36,16 @@
                 <span class="loader"></span>
                 <? if ($isMy): ?>
                     <button type="button" onclick="orderist.order.deleteConfirm('<?=$order['id']?>'); event.stopPropagation(); return false;" class="btn btn-loading btn-danger order-button">
-                        Удалить заказ
+                        <?=_g('Delete order')?>
                     </button>
                 <? else: ?>
                     <button type="button" onclick="orderist.order.execute('<?=$order['id']?>'); event.stopPropagation(); return false;" class="btn btn-loading btn-info order-button">
-                        Выполнить заказ
+                        <?=_g('Take order')?>
                     </button>
                 <? endif ?>
             <? else: ?>
                 <button type="button" onclick="event.stopPropagation(); return false;" class="btn btn-info order-button">
-                    <?=$order['state'] == OrderDao::STATE_DELETED ? 'Заказ удалён' : 'Заказ выполнен'?>
+                    <?=$order['state'] == OrderDao::STATE_DELETED ? _g('Order deleted') : _g('Order completed') ?>
                 </button>
             <? endif ?>
         </div>

@@ -1,7 +1,7 @@
-<p>Вы зарегистировались на сайте Заказист.</p>
+<p><?=_g('You have successfully signed up on orderist.')?></p>
 <br/>
-Ваши данные:<br/>
+<?=_g('Your data:')?><br/>
 Email: <?=$user['email']?><br/>
-Пароль: <?=$password?><br/>
+<?=_g('Password')?>: <?=$password?><br/>
 <br/><br/>
-<a href="http://<?=$this->getDI()->getConfig()['domain']?>/">Перейти на сайт</a>
+<a href="http://<?=$this->getDI()->getConfig()['domain']?>/"><?=_g('Go to website')?></a>

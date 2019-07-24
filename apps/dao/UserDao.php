@@ -33,7 +33,9 @@ class UserDao extends BaseDao
 
     public function getByIds($userIds)
     {
-        return $this->getDataByIdsWithMemcache($userIds, [$this, 'getUsersFromDb'], self::MC_KEY, self::MC_TIME, []);
+        return $this->getDataByIdsWithMemcache(
+            $userIds, [$this, 'getUsersFromDb'], self::MC_KEY, self::MC_TIME, []
+        );
     }
 
     public function getUsersFromDb($userIds)
@@ -54,7 +56,9 @@ class UserDao extends BaseDao
     public function getByEmail($email)
     {
         $email = mb_strtolower($email);
-        $select = $this->db->select()->from(self::TABLE_USER)->where('email_hash = ?', crc32($email))->where('email = ?', $email);
+        $select = $this->db->select()->from(self::TABLE_USER)
+            ->where('email_hash = ?', crc32($email))
+            ->where('email = ?', $email);
         return $this->db->fetchRow($select);
     }
 
@@ -96,17 +100,17 @@ class UserDao extends BaseDao
 
         $errors = [];
         if (mb_strlen($name) < 2) {
-            $errors[] = 'Слишком короткое имя.';
+            $errors[] = _g('Name is too short.');
         } else if (mb_strlen($name) > 80) {
-            $errors[] = 'Слишком длинное имя.';
+            $errors[] = _g('Name is too long.');
         }
 
         if (mb_strlen($password) < 5) {
-            $errors[] = 'Слишком короткий пароль.';
+            $errors[] = _g('Password is too short.');
         }
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $errors[] = 'Вы ввели недопустимый Email.';
+            $errors[] = _g('Email is invalid.');
         }
 
         if (!empty($errors)) {
@@ -115,7 +119,7 @@ class UserDao extends BaseDao
 
         $user = $this->getByEmail($email);
         if (!empty($user)) {
-            $errors[] = 'Пользователь с таким Email уже зарегисрирован.';
+            $errors[] = _g('User with this Email is already registered.');
             return ['errors' => $errors];
         }
 
@@ -183,7 +187,9 @@ class UserDao extends BaseDao
             $data = BaseMemcache::i()->get(self::NEW_PAYMENTS_MCKEY . $userId);
             if ($data === false) {
                 $data = $this->getUserPaymentsFromDb($userId, self::NEW_PAYMENTS_LIMIT);
-                BaseMemcache::i()->set(self::NEW_PAYMENTS_MCKEY . $userId, $data, self::NEW_PAYMENTS_MCTIME);
+                BaseMemcache::i()->set(
+                    self::NEW_PAYMENTS_MCKEY . $userId, $data, self::NEW_PAYMENTS_MCTIME
+                );
             }
             return array_slice($data, 0, $limit, true);
         }
@@ -202,7 +208,9 @@ class UserDao extends BaseDao
         $limit = (int)$limit;
         $lastPaymentId = (int)$lastPaymentId;
 
-        $select = $this->db->select()->from($this->getPaymentsTable($userId))->order('id DESC')->limit($limit);
+        $select = $this->db->select()->from($this->getPaymentsTable($userId))
+            ->order('id DESC')->limit($limit);
+
         if ($userId) {
             $select->where('user_id = ?', $userId);
         }
@@ -217,14 +225,18 @@ class UserDao extends BaseDao
     public function getUserUpdateByPayments($userId)
     {
         $table = $this->getPaymentsTable($userId);
-        $select = $this->db->qq("SELECT SUM(amount) as cash, MAX(id) as payment_id FROM {$table} WHERE user_id = ?;", $userId);
+        $select = $this->db->qq(
+            "SELECT SUM(amount) as cash, MAX(id) as payment_id FROM {$table} WHERE user_id = ?;", $userId
+        );
         return $this->db->fetchRow($select);
     }
 
     public function getUserOrderPayment($userId, $orderId)
     {
         $table = $this->getPaymentsTable($userId);
-        $select = $this->db->select()->from($table)->where('user_id = ?', $userId)->where('order_id = ?', $orderId);
+        $select = $this->db->select()->from($table)
+            ->where('user_id = ?', $userId)
+            ->where('order_id = ?', $orderId);
         return $this->db->fetchRow($select);
     }
 }

@@ -44,13 +44,37 @@ class UserController extends BaseController
 	protected function _prepareOrders($state, $offset = 0, $lastOrderId = 0, $firstTime = 0)
 	{
 		if (!$state) {
-			$orders = OrderDao::i()->getOrders(['user_id' => $this->USER['id']], ['id', 'DESC'], self::ORDERS_PER_PAGE, 0, $lastOrderId);
+			$orders = OrderDao::i()->getOrders(
+			    ['user_id' => $this->USER['id']],
+                ['id', 'DESC'],
+                self::ORDERS_PER_PAGE,
+                0,
+                $lastOrderId
+            );
 		} elseif ($state == OrderDao::STATE_NEW) {
-			$orders = OrderDao::i()->getOrders(['user_id' => $this->USER['id'], 'state' => OrderDao::STATE_NEW], ['id', 'DESC'], self::ORDERS_PER_PAGE, 0, $lastOrderId);
+			$orders = OrderDao::i()->getOrders(
+			    ['user_id' => $this->USER['id'], 'state' => OrderDao::STATE_NEW],
+                ['id', 'DESC'],
+                self::ORDERS_PER_PAGE,
+                0,
+                $lastOrderId
+            );
         } else if ($state == OrderDao::STATE_EXECUTED) {
-			$orders = OrderDao::i()->getOrders(['user_id' => $this->USER['id'], 'state' => OrderDao::STATE_EXECUTED], ['executed', 'DESC'], self::ORDERS_PER_PAGE, $offset, $firstTime);
+			$orders = OrderDao::i()->getOrders(
+			    ['user_id' => $this->USER['id'], 'state' => OrderDao::STATE_EXECUTED],
+                ['executed', 'DESC'],
+                self::ORDERS_PER_PAGE,
+                $offset,
+                $firstTime
+            );
         } else if ($state == OrderDao::FAKE_STATE_EXECUTER) {
-			$orders = OrderDao::i()->getOrders(['executer_id' => $this->USER['id'], 'state' => OrderDao::STATE_EXECUTED], ['executed', 'DESC'], self::ORDERS_PER_PAGE, $offset, $firstTime);
+			$orders = OrderDao::i()->getOrders(
+			    ['executer_id' => $this->USER['id'], 'state' => OrderDao::STATE_EXECUTED],
+                ['executed', 'DESC'],
+                self::ORDERS_PER_PAGE,
+                $offset,
+                $firstTime
+            );
 		}
 		$orders = OrderDao::i()->prepareOrders($orders);
 
@@ -111,7 +135,7 @@ class UserController extends BaseController
 			$res = UserDao::i()->addUser($name, $email, $password);
 
 			if (!$res || !empty($res['errors'])) {
-                // А вдруг юзер решил зарегаться ещё раз и ввел существующий email и пароль
+                // Existing email and password
                 $user = UserDao::i()->getByEmail($email);
                 if ($user && password_verify($password, $user['password'])) {
                     BaseAuth::i()->authUser($user);
@@ -120,7 +144,7 @@ class UserController extends BaseController
 
 				return $this->ajaxSuccess(['errors' => $res['errors']]);
 			} else {
-				$this->debugSleep(1); // Да простит меня тестирующий, но ведь на котика-то надо посмотреть :)
+				$this->debugSleep(1); // Sorry for this, but I had to show the kitty somehow :)
 
 				$user = UserDao::i()->getById($res);
 
@@ -162,7 +186,7 @@ class UserController extends BaseController
 				BaseAuth::i()->authUser($user);
 				return $this->redirect('/orders/');
 			} else {
-				return $this->ajaxSuccess(['error' => 'Неправильный Email или пароль.']);
+				return $this->ajaxSuccess(['error' => _g('Wrong Email or password.')]);
 			}
 		}
 
@@ -221,7 +245,7 @@ class UserController extends BaseController
 	}
 
 	/**
-	 * Нужно для проверки авторизации юзера из NodeJS сервера
+	 * NodeJS server needs this to check if user is authentificated
 	 */
 	public function authAction()
 	{

@@ -7,7 +7,11 @@ class AdminController extends BaseController
         $this->view->text = BaseMemcache::i()->get('admintext');
 
         $db = BaseDao::i()->db;
-        $select = $db->select()->from(OrderDao::TABLE_ORDERS, ['SUM(commission) as commission', 'SUM(price) as price'])->where('state = ?', OrderDao::STATE_EXECUTED)->where('user_payment_id > 0')->where('executer_payment_id > 0');
+        $select = $db->select()
+            ->from(OrderDao::TABLE_ORDERS, ['SUM(commission) as commission', 'SUM(price) as price'])
+            ->where('state = ?', OrderDao::STATE_EXECUTED)
+            ->where('user_payment_id > 0')
+            ->where('executer_payment_id > 0');
         $data = $db->fetchRow($select);
 
         $this->view->income = ['price' => 0, 'commission' => 0];
@@ -27,26 +31,22 @@ class AdminController extends BaseController
     {
         $debug = (int)$this->p('debug', 0);
         $res = BaseService::i()->setCookie('debug', $debug, BaseService::TIME_YEAR);
-        BaseMemcache::i()->set('admintext', $debug ? 'Отладка включена' : 'Отладка выключена', 60);
-        $this->redirect('/admin/');
-    }
-
-    public function roundingAction()
-    {
-        $rounding = (int)$this->p('enabled', 0);
-        if ($rounding) {
-            $res = BaseService::i()->deleteCookie('rounding');
-        } else {
-            $res = BaseService::i()->setCookie('rounding', 1, BaseService::TIME_YEAR);
-        }
-        BaseMemcache::i()->set('admintext', $rounding ? 'Округление включено' : 'Округление выключено', 60);
+        BaseMemcache::i()->set(
+            'admintext',
+            $debug ? _g('Debug enabled') : _g('Debug disabled'),
+            60
+        );
         $this->redirect('/admin/');
     }
 
     public function clearmemcacheAction()
     {
         $res = BaseMemcache::i()->mc->flush();
-        BaseMemcache::i()->set('admintext', $res ? 'Memcache очищен' : 'Ошибка', 60);
+        BaseMemcache::i()->set(
+            'admintext',
+            $res ? _g('Memcache cleared') : _g('Error'),
+            60
+        );
         $this->redirect('/admin/');
     }
 
@@ -54,32 +54,39 @@ class AdminController extends BaseController
     {
         $this->norender();
 
-        // Тут будет восстановление после сбоя
+        // Restoring data consistency after failure
         ini_set('memory_limit', '512M');
         ini_set('max_execution_time', 60);
 
         $count = 0;
 
-        // TODO: возможна ещё ситуация, когда заказ удалили, но деньги мы не разморозили, надо просто fixUserHold сделать
+        // TODO: It's possible that order is deleted, but money is no unholded, we have to do just fixUserHold
 
         $count += $this->fixCreatedOrders();
 
-        $from = strtotime('-60 minutes'); $to = time(); // Задаем временной интервал в котором были проблемы
+        $from = strtotime('-60 minutes'); $to = time(); // Time interval where we had problems
         $count += $this->fixPayments($from, $to);
 
         $count += $this->fixExecutedOrders();
 
-        BaseMemcache::i()->set('admintext', $count == 0 ? 'Всё ОК' : 'Исправили '. $count .' ошибок', 60);
+        BaseMemcache::i()->set(
+            'admintext',
+            $count == 0 ? _g('Everything is OK') : _f('Fixed %s errors', $count),
+            60
+        );
         $this->redirect('/admin/');
     }
 
-    // Ошибки когда заказ исполнился, а транзакция денег не добавилась
+    // Errors when order is completed, but money transaction is not done
     protected function fixExecutedOrders($limit = 1000)
     {
         $db = BaseDao::i()->db;
 
         $count = 0;
-        $select = $db->select()->from(OrderDao::TABLE_ORDERS)->where('state = ?', OrderDao::STATE_EXECUTED)->where('user_payment_id = 0 OR executer_payment_id = 0')->limit($limit);
+        $select = $db->select()->from(OrderDao::TABLE_ORDERS)
+            ->where('state = ?', OrderDao::STATE_EXECUTED)
+            ->where('user_payment_id = 0 OR executer_payment_id = 0')
+            ->limit($limit);
         $data = $db->fetchAll($select);
         foreach ($data as $order) {
             $orderId = $order['id'];
@@ -87,7 +94,9 @@ class AdminController extends BaseController
             if ($order['user_payment_id'] == 0) {
                 if (LockDao::i()->lock(LockDao::USER, $order['user_id'])) {
                     $payment = UserDao::i()->getUserOrderPayment($order['user_id'], $orderId);
-                    $userPaymentId = empty($payment) ? UserDao::i()->updateMoney($order['user_id'], -$order['price'], -$order['price'], $orderId) : $payment['id'];
+                    $userPaymentId = empty($payment) ?
+                        UserDao::i()->updateMoney($order['user_id'], -$order['price'], -$order['price'], $orderId) :
+                        $payment['id'];
 
                     if ($userPaymentId) {
                         OrderDao::i()->_updateRaw($orderId, [
@@ -103,7 +112,9 @@ class AdminController extends BaseController
                     $price = $order['price'] - $order['commission'];
 
                     $payment = UserDao::i()->getUserOrderPayment($order['executer_id'], $orderId);
-                    $executerPaymentId = empty($payment) ? UserDao::i()->updateMoney($order['executer_id'], $price, 0, $orderId) : $payment['id'];
+                    $executerPaymentId = empty($payment) ?
+                        UserDao::i()->updateMoney($order['executer_id'], $price, 0, $orderId) :
+                        $payment['id'];
 
                     if ($executerPaymentId) {
                         OrderDao::i()->_updateRaw($orderId, [
@@ -119,13 +130,16 @@ class AdminController extends BaseController
         return $count;
     }
 
-    // Ошибки когда заказ создался, а деньги в холд не ушли
+    // Errors when order is created, but money in not holded
     protected function fixCreatedOrders($limit = 1000)
     {
         $db = BaseDao::i()->db;
 
         $fixedUsers = $fixedOrders = [];
-        $select = $db->select()->from(OrderDao::TABLE_ORDERS)->where('state = ?', OrderDao::STATE_NEW)->where('user_payment_id = ?', 0)->limit($limit); // Если user_payment_id = 0, значит до конца заказ не создался и деньги не заморожены
+        $select = $db->select()->from(OrderDao::TABLE_ORDERS)
+            ->where('state = ?', OrderDao::STATE_NEW)
+            ->where('user_payment_id = ?', 0)
+            ->limit($limit); // If user_payment_id = 0, then order creation did not finish and money in not holded
         $data = $db->fetchAll($select);
         foreach ($data as $order) {
             $userId = $order['user_id'];
@@ -137,7 +151,7 @@ class AdminController extends BaseController
                 }
             }
 
-            if (!empty($fixedUsers[$userId])) { // hold юзера пофиксили, обновим заказ
+            if (!empty($fixedUsers[$userId])) { // user hold fixed, updated order
                 $fixedOrders[$orderId] = OrderDao::i()->_updateRaw($orderId, [
                     'user_payment_id' => 1,
                 ]);
@@ -147,7 +161,7 @@ class AdminController extends BaseController
         return count($fixedOrders);
     }
 
-    // Ошибки когда транзакция есть, а денег то нет
+    // Errors when there is a transaction, but no money
     protected function fixPayments($from, $to, $limit = 1000)
     {
         $db = BaseDao::i()->db;
@@ -156,7 +170,9 @@ class AdminController extends BaseController
         for ($i = 0; $i < UserDao::TABLE_PAYMENTS_SHARDS; $i++) {
             $table = UserDao::TABLE_PAYMENTS . "_{$i}";
 
-            $select = $db->select()->from($table)->where('? <= inserted', $from)->where('inserted <= ?', $to)->limit($limit); // Выбрали все транзакции за этот период
+            $select = $db->select()->from($table)->where('? <= inserted', $from)
+                ->where('inserted <= ?', $to)
+                ->limit($limit); // Select all transactions from this period
             $payments = $db->fetchAll($select);
             $userIds = array_column($payments, 'user_id');
             $userIds = array_unique($userIds);
@@ -164,16 +180,19 @@ class AdminController extends BaseController
             if (empty($userIds)) continue;
 
             $lastPayments = [];
-            foreach ($payments as $payment) { // Построим соответствие user_id => id последней транзакции
+            foreach ($payments as $payment) { // Map user_id => id from latest transaction
                 if (empty($lastPayments[$payment['user_id']])) $lastPayments[$payment['user_id']] = $payment['id'];
                 $lastPayments[$payment['user_id']] = max($lastPayments[$payment['user_id']], $payment['id']);
             }
 
-            $select = $db->select()->from(UserDao::TABLE_USER)->where('id IN (?)', $userIds); // Выберем всех юзеров из транзакций
+            $select = $db->select()->from(UserDao::TABLE_USER)
+                ->where('id IN (?)', $userIds); // Select all users from transaction
             $users = $db->fetchAll($select);
 
             foreach ($users as $user) {
-                if ($user['payment_id'] < $lastPayments[$user['id']]) { // Если в юзере id транзакции не совпадает с последней из таблицы тарнзакци, значит что-то пошло не так и надо фиксить баланс
+                // If user transaction is not consistent with latest transaction from table,
+                // then something gone wrong and we need to fix balance
+                if ($user['payment_id'] < $lastPayments[$user['id']]) {
                     $fixedCash[$user['id']] = $this->fixUserCash($user['id']);
                 }
             }
@@ -202,7 +221,9 @@ class AdminController extends BaseController
         $db = BaseDao::i()->db;
 
         if (LockDao::i()->lock(LockDao::USER, $userId)) {
-            $select = $db->select()->from(OrderDao::TABLE_ORDERS, 'SUM(price) as price')->where('user_id = ?', $userId)->where('state = ?', OrderDao::STATE_NEW);
+            $select = $db->select()->from(OrderDao::TABLE_ORDERS, 'SUM(price) as price')
+                ->where('user_id = ?', $userId)
+                ->where('state = ?', OrderDao::STATE_NEW);
             $price = $db->fetchOne($select);
 
             $res = UserDao::i()->_update($userId, [

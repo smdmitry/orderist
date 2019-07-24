@@ -1,9 +1,8 @@
 <ul class="nav nav-tabs">
-    <li role="presentation" class="<?=$state === OrderDao::STATE_NEW ? 'active' : ''?>"><a href="/user/orders/?state=<?=OrderDao::STATE_NEW?>">Активные</a></li>
-    <li role="presentation" class="<?=$state === OrderDao::STATE_EXECUTED ? 'active' : ''?>"><a href="/user/orders/?state=<?=OrderDao::STATE_EXECUTED?>">Завершённые</a></li>
-    <!--<li role="presentation" class="<?=!$state ? 'active' : ''?>"><a href="/user/orders/?state=0">Все закакзы</a></li>-->
+    <li role="presentation" class="<?=$state === OrderDao::STATE_NEW ? 'active' : ''?>"><a href="/user/orders/?state=<?=OrderDao::STATE_NEW?>"><?=_g('Active')?></a></li>
+    <li role="presentation" class="<?=$state === OrderDao::STATE_EXECUTED ? 'active' : ''?>"><a href="/user/orders/?state=<?=OrderDao::STATE_EXECUTED?>"><?=_g('Completed')?></a></li>
     <li role="presentation" style="margin-left: 20px;" class="<?=$state === OrderDao::FAKE_STATE_EXECUTER ? 'active' : ''?>">
-        <a href="/user/orders/?state=<?=OrderDao::FAKE_STATE_EXECUTER?>">Выполненные мной</a>
+        <a href="/user/orders/?state=<?=OrderDao::FAKE_STATE_EXECUTER?>"><?=_g('Executed by me')?></a>
     </li>
 </ul>
 
@@ -12,14 +11,14 @@
         <? if (empty($orders)): ?>
             <? if (!$state || $state === OrderDao::STATE_NEW || $state === OrderDao::STATE_EXECUTED): ?>
                 <?
-                    $stateText = !$state ? '' : ($state === OrderDao::STATE_NEW ? ' активных' : ' завершённых');
+                    $stateText = !$state ? '' : ($state === OrderDao::STATE_NEW ? (' ' . _g('active')) : (' ' . _g('completed')));
                 ?>
                 <h4>
-                    У вас нет<?=$stateText?> заказов, но вы можете <a href="/order/create/" onclick="orderist.order.createPopup.open(); return false;">разместить новый заказ</a>.
+                    <?=_f('orders_no_orders', $stateText)?>
                 </h4>
             <? else: ?>
                 <h4>
-                    У вас нет выполненных заказов, но вы можете <a href="/orders/">найти себе заказ</a> прямо сейчас.
+                    <?=_g('orders_no_completed')?>
                 </h4>
             <? endif ?>
         <? endif ?>

@@ -77,7 +77,7 @@ var orderist = {
                             errorBlock.append('<div class="alert alert-dismissible alert-danger">'+error+'</div>')
                         });
                     } else {
-                        var errorText = response.data.error || 'Ошибка, попробуйте ещё раз!';
+                        var errorText = response.data.error || _g('Error, please try again!');
                         if (errorBlock.length) {
                             errorBlock.html('<div class="alert alert-dismissible alert-danger">' + errorText + '</div>');
                         } else {
@@ -92,7 +92,7 @@ var orderist = {
             }
 
             if (typeof response.res == 'undefined') {
-                orderist.popup.alert('Ой, что-то пошло не так! Попробуйте пожалуйста ещё раз.')
+                orderist.popup.alert(_g('Error, please try again!'))
             }
 
             return response.res;
@@ -171,14 +171,14 @@ var orderist = {
                             '<div class="modal-content">'+
                                 '<div class="modal-header">'+
                                     '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>'+
-                                    '<h4 class="modal-title">Подтверждение</h4>'+
+                                    '<h4 class="modal-title">'+ _g('Confirmation') +'</h4>'+
                                 '</div>'+
                                 '<div class="modal-body">'+
                                     '<h3 class="text"></h3>'+
                                 '</div>'+
                                 '<div class="modal-footer">'+
-                                    '<button type="button" class="btn btn-primary no" onclick="orderist.popup.close(); orderist.popup.confirmCallback(0);">Отмена</button>'+
-                                    '<button type="button" class="btn btn-danger yes" onclick="orderist.popup.close(); orderist.popup.confirmCallback(1);">ОК</button>'+
+                                    '<button type="button" class="btn btn-primary no" onclick="orderist.popup.close(); orderist.popup.confirmCallback(0);">'+ _g('Cancel') +'</button>'+
+                                    '<button type="button" class="btn btn-danger yes" onclick="orderist.popup.close(); orderist.popup.confirmCallback(1);">'+ _g('OK') +'</button>'+
                                 '</div>'+
                             '</div>'+
                         '</div></div>');
@@ -196,11 +196,11 @@ var orderist = {
                                 '<div class="modal-content">'+
                                     '<div class="modal-header">'+
                                         '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>'+
-                                        '<h4 class="modal-title">Произошла ошибка</h4>'+
+                                        '<h4 class="modal-title">'+ _g('Error') +'</h4>'+
                                     '</div>'+
                                     '<div class="modal-body"></div>'+
                                     '<div class="modal-footer">'+
-                                        '<button type="button" class="btn btn-primary" data-dismiss="modal">Закрыть</button>'+
+                                        '<button type="button" class="btn btn-primary" data-dismiss="modal">'+ _g('Close') +'</button>'+
                                     '</div>'+
                                 '</div>'+
                             '</div>'+
@@ -351,7 +351,7 @@ var orderist = {
                 if (el.height() > maxHeight + 100) {
                     el.parent().addClass('expandable').attr('onclick', '$(\'.shorter-link\', $(this)).click();');
                     el.addClass('shorten').css('max-height', maxHeight + 'px');
-                    el.after('<a class="shorter-link" onclick="orderist.order.expand(\''+id+'\'); return false;">Показать полностью</a>');
+                    el.after('<a class="shorter-link" onclick="orderist.order.expand(\''+id+'\'); return false;">'+ _g('Expand') +'</a>');
                 }
             });
         },
@@ -387,7 +387,7 @@ var orderist = {
                     orderist.order.payment.calculate();
                 }
             },
-            _calc: function(price, cmul, type, cthreshold) {
+            _calc: function(price, cmul, type) {
                 price = Math.round(price * 100);
                 var orig = price;
 
@@ -397,30 +397,6 @@ var orderist = {
 
                 var commission = Math.ceil(price * cmul);
 
-                if (cthreshold) {
-                    var scales = [100000, 50000, 10000, 5000, 1000, 500, 100, 50, 10, 5];
-                    var threshold = cmul * cthreshold;
-
-                    for (var i = 0; i < scales.length; i++) {
-                        var newprice = price;
-                        var newcomm = commission;
-
-                        if (type == 'executer') {
-                            newprice = Math.floor(price / scales[i]) * scales[i];
-                            newcomm = newprice - orig;
-                        } else {
-                            newcomm = Math.floor(commission / scales[i]) * scales[i];
-                        }
-
-                        var newcmul = newcomm / newprice;
-                        if (Math.abs(cmul - newcmul) <= threshold && newcmul <= cmul) {
-                            price = newprice;
-                            commission = newcomm;
-                            break;
-                        }
-                    }
-                }
-
                 return {price: price, commission: commission, executer: price - commission};
             },
             calculate: function() {
@@ -428,20 +404,13 @@ var orderist = {
                 var popup = $('#order-create-popup');
                 var input = $('#order-create-popup input[name=order_price]');
 
-                var cmul = $('.order-commission', popup).data('value');
-                var cthreshold = $('input[name=order_cthreshold]', popup).val();
+                var cmul = parseFloat($('.order-commission', popup).data('value'));
 
                 var price = input.val().replace(/[^0-9\.]/g, '');
                 price = Number(price.match(/^\d+(?:\.\d{0,2})?/));
 
-                var data = orderist.order.payment._calc(price, cmul, type, cthreshold);
+                var data = orderist.order.payment._calc(price, cmul, type);
                 var realCommission = data.price == 0 ? (cmul * 100) : Math.round(data.commission / data.price * 100);
-                if (cthreshold) { // Не будем показывать юзеру меньшую комиссию, если она в допустимых пределах
-                    var newcmul = data.commission / data.price;
-                    if (Math.abs(cmul - newcmul) <= cthreshold && newcmul <= cmul) {
-                        realCommission = cmul * 100;
-                    }
-                }
 
                 var priceText = parseFloat((data.price / 100).toFixed(2));
                 var executerPriceText = parseFloat((data.executer / 100).toFixed(2));
@@ -484,7 +453,7 @@ var orderist = {
             addCash: function(amount, callback) {
                 orderist.user.addCash(amount, function(res) {
                     if (res) {
-                        $('#order-create-popup .errors-block').html('<div class="alert alert-success">Спасибо, ваш счет пополнен на '+ (amount/100) +' руб.</div>');
+                        $('#order-create-popup .errors-block').html('<div class="alert alert-success">'+ _g('Thanks! You earned') +' '+ (amount/100) +' '+ _g('USD') +'</div>');
                     }
                 });
             }
@@ -521,7 +490,7 @@ var orderist = {
 
                 var disableBtn = function(block) {
                     block.addClass('disabled');
-                    $('button', block).html('Заказ выполнен');
+                    $('button', block).html(_g('Order completed'));
                     $('button', block).removeAttr('onclick');
                 };
 
@@ -531,7 +500,7 @@ var orderist = {
 
                 if (orderist.core.processResponse(response)) {
                     disableBtn(orderBlock);
-                    $('.order-get-text', orderBlock).html('Вы получили:');
+                    $('.order-get-text', orderBlock).html(_g('You earned:'));
                     orderist.order.animate(orderId);
                 } else {
                     orderist.user.updateCashLock = false;
@@ -561,7 +530,7 @@ var orderist = {
             });
         },
         deleteConfirm: function (orderId) {
-            orderist.popup.confirm('Вы уверены, что хотите удалить заказ?', 'Отмена', 'Удалить', function(result) {
+            orderist.popup.confirm(_g('Do you want to delete order?'), _g('Cancel'), _g('Delete'), function(result) {
                 result && orderist.order.delete(orderId);
             });
         },
@@ -635,12 +604,12 @@ $(document).ready(function () {
             if (data.action == 'executed') {
                 var block = $('#order-'+data.id);
                 block.addClass('disabled');
-                $('button', block).html('Заказ выполнен');
+                $('button', block).html(_g('Order completed'));
                 $('button', block).removeAttr('onclick');
             } else if (data.action == 'deleted') {
                 var block = $('#order-'+data.id);
                 block.addClass('disabled');
-                $('button', block).html('Заказ удалён');
+                $('button', block).html(_g('Order deleted'));
                 $('button', block).removeAttr('onclick');
             } else if (data.action == 'created') {
                 // TODO: Add new orders block
@@ -649,4 +618,6 @@ $(document).ready(function () {
     });
 });
 
-
+var _g = function (text) {
+    return text;
+};

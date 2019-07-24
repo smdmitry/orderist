@@ -1,25 +1,25 @@
 <div class="row col-md-10 col-md-offset-1">
     <p>
-        Ваш баланс: <span class="label label-info"><span class="user-cash"><?=UserDao::i()->getField($USER, 'cash')?></span> руб.</span><span class="user-cash-hold-block <?=$USER['hold'] == 0 ? 'h' : ''?>">,
-        ещё <span class="label label-default order-commission"><span class="user-hold"><?=UserDao::i()->getField($USER, 'hold')?></span> руб.</span>
-            <span href="#" class="jsLink" data-toggle="tooltip" data-placement="bottom" title="Когда вы создаёте заказ, то деньги не списываются с вашего счета, а просто блокируются на время, пока кто-то его не выполнит. Если вы удалите активные заказы, то все деньги вернутся вам на счёт.">заблокировано<sup><b>?</b></sup></span></span>
+        <?=_g('Your balance:')?> <span class="label label-info"><span class="user-cash"><?=UserDao::i()->getField($USER, 'cash')?></span> <?=_g('USD')?></span><span class="user-cash-hold-block <?=$USER['hold'] == 0 ? 'h' : ''?>">,
+        <?=_g('and')?> <span class="label label-default order-commission"><span class="user-hold"><?=UserDao::i()->getField($USER, 'hold')?></span> <?=_g('USD')?></span>
+            <span href="#" class="jsLink" data-toggle="tooltip" data-placement="bottom" title="<?=_g('balance_locked_funds')?>"><?=_g('locked')?><sup><b>?</b></sup></span></span>
     </p>
 
     <blockquote>
-        <a href="/user/cash/" onclick="orderist.user.addCash(10000); return false;" class="btn btn-xs btn-success">Пополнить счет на 100 руб.</a>
-        <a href="/user/cash/" onclick="orderist.user.addCash(-10000); return false;" class="btn btn-xs btn-warning">Вывести со счета 100 руб.</a>
-        <a href="/user/cash/" onclick="orderist.user.addCash(0); return false;" class="btn btn-xs btn-danger">Обнулить</a>
-        <small>сделано только для удобства тестирования</small>
+        <a href="/user/cash/" onclick="orderist.user.addCash(10000); return false;" class="btn btn-xs btn-success"><?=_g('Topup 100 USD')?></a>
+        <a href="/user/cash/" onclick="orderist.user.addCash(-10000); return false;" class="btn btn-xs btn-warning"><?=_g('Withdraw 100 USD')?></a>
+        <a href="/user/cash/" onclick="orderist.user.addCash(0); return false;" class="btn btn-xs btn-danger"><?=_g('Nullify')?></a>
+        <small><?=_g('this is for testing only')?></small>
     </blockquote>
 
     <div id="user-payments-block" style="display: <?=empty($payments) ? 'none' : 'block'?>;">
-        <h3>История транзакций</h3>
+        <h3><?=_g('Transactions history')?></h3>
         <table class="table table-striped table-hover">
             <thead>
             <tr>
-                <th style="width: 250px;">Дата</th>
-                <th style="width: 200px;">Сумма</th>
-                <th>Описание</th>
+                <th style="width: 250px;"><?=_g('Date')?></th>
+                <th style="width: 200px;"><?=_g('Amount')?></th>
+                <th><?=_g('Description')?></th>
             </tr>
             </thead>
             <tbody>

@@ -3,26 +3,20 @@
 <? endif ?>
 
 <p>
-    Наш доход с комисии: <span class="label label-info"><?=BaseService::i()->formatMoney($income['commission'])?> руб.</span><br>
+    <?=_g('Our revenue:')?> <span class="label label-info"><?=BaseService::i()->formatMoney($income['commission'])?> <?=_g('USD')?></span><br>
 </p>
 
-<? if (BaseService::i()->isRoundingEnabled()): ?>
-    <a href="/admin/rounding/?enabled=0">Выключить округления</a><br>
-<? else :?>
-    <a href="/admin/rounding/?enabled=1">Включить округления</a><br>
-<? endif ?>
-
 <? if (BaseService::i()->getCookie('debug')): ?>
-    <a href="/admin/debug/?debug=0">Выключить отладку</a><br>
+    <a href="/admin/debug/?debug=0">Disable debug</a><br>
 <? else :?>
-    <a href="/admin/debug/?debug=1">Включить отладку</a><br>
+    <a href="/admin/debug/?debug=1">Enable debug</a><br>
 <? endif ?>
 
 <br/>
 
-<a href="/admin/clearmemcache/">Очистить Memcache</a><br>
-<a href="/admin/recover/">Проверить целостность данных</a><br>
+<a href="/admin/clearmemcache/">Clear Memcache</a><br>
+<a href="/admin/recover/"><?=_g('Check data consistency')?></a><br>
 
 <br/>
 
-<a target="_blank" href="/adminer.php">Администрирование MySQL</a> (Логин/Пароль: readonly)<br>
+<a target="_blank" href="/adminer.php">MySQL Admin</a> (Login/Password: readonly)<br>
