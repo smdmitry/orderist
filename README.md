@@ -1,4 +1,4 @@
-Live on: https://orderist.smdmitry.com  
+Live on: https://orderist.smdmitry.ru 
 
 The objective was to make very simple analog of [AirTasker](https://www.airtasker.com), [YouDo](https://youdo.ru) 
 
@@ -31,10 +31,10 @@ There is code which [detects and fixes them](https://github.com/smdmitry/orderis
 
 ##### How to test: 
 
-You can modify your balance on [balance page](https://orderist.smdmitry.com/user/cash/).  
+You can modify your balance on [balance page](https://orderist.smdmitry.ru/user/cash/).  
 
-There is [admin panel](https://orderist.smdmitry.com/admin/), to enable/disable debug and clear memcache.  
-Database admin panel to see [tables and data](https://orderist.smdmitry.com/adminer.php). (Login/Password: readonly)  
+There is [admin panel](https://orderist.smdmitry.ru/admin/), to enable/disable debug and clear memcache.  
+Database admin panel to see [tables and data](https://orderist.smdmitry.ru/adminer.php). (Login/Password: readonly)  
 
 When debug is on [FireLogger](https://firelogger.binaryage.com/) ([Firefox](https://addons.mozilla.org/ru/firefox/addon/firelogger/), [Chrome](https://smd.im/WOs)) will display all queries to MySQL and Memcache. [Example](https://scr.smd.im/fs-ju4r5fnec5-2016-03-22-11_35_13.png)  
 
